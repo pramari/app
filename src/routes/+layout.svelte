@@ -1,8 +1,9 @@
-<script>import "../app.css";</script><slot></slot>
-
 <script>
- let { children } = $props();
-</script>
+
+import "../app.css";</script>
+let { children } = $props();
+
+<!-- <slot></slot> -->
 
 <nav>
   <a href="/">Home</a>
