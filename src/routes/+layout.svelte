@@ -1,10 +1,14 @@
-<script lang="ts">
-	import { i18n } from "$lib/i18n";
-	import { ParaglideJS } from "@inlang/paraglide-sveltekit";
-	import '../app.css';
-	let { children } = $props();
+<script>
+  import TailwindCss from '../lib/TailwindCSS.svelte';
+  import "../app.css";
+  let { children } = $props();
 </script>
 
-<ParaglideJS {i18n}>
-	{@render children()}
-</ParaglideJS>
+<TailwindCss/>
+
+<nav class="bg-gray-800">
+  <a href="/">Home</a>
+  <a href="/about">About</a>
+</nav>
+
+{@render children()}
