@@ -1,13 +1,11 @@
+@import "tailwindcss";
+/*
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
+*/
 
 html {
     font-family: "Roboto", sans-serif;
     background-color: #dddddd;
-}
-
-@theme {
-    /*--color-mint-500: oklch(0.72 0.11 178); */
-    /* --color-gray-100: gray(100);*/
 }

@@ -4,9 +4,12 @@
     documentation
 </p>
 
+<!-- component
+
 <style lang="postcss">
-    @reference "tailwindcss/base";
+    @reference "tailwindcss";
     :global(html) {
         /*    background-color: #cccccc;  theme(--color-gray-100);*/
     }
 </style>
+-->
