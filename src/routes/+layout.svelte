@@ -1,14 +1,14 @@
 <script>
-  import TailwindCss from '../lib/TailwindCSS.svelte';
-  import "../app.css";
-  let { children } = $props();
+    import TailwindCss from "../lib/TailwindCSS.svelte";
+    let { children } = $props();
+    import "../app.css";
 </script>
 
-<TailwindCss/>
+<TailwindCss />
 
 <nav class="bg-gray-800">
-  <a href="/">Home</a>
-  <a href="/about">About</a>
+    <a href="/">Home</a>
+    <a href="/about">About</a>
 </nav>
 
 {@render children()}
