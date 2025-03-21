@@ -1,10 +1,18 @@
 import { SvelteKitAuth } from "@auth/sveltekit";
 import Google from "@auth/core/providers/google";
+// import { OIDC } from "@auth/core/providers/oidc";
+// import { OAuthConfig } from "@auth/core/providers";
+// import { OAuth } from "@auth/core/providers/oauth";
+import type { OAuthConfig, OAuthUserConfig } from "@auth/core/providers";
+
 import type { Provider } from "@auth/core/providers";
 import type { Session, User } from "@auth/core/types";
 import {
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
+  PRAMARI_CLIENT_ID,
+  PRAMARI_CLIENT_SECRET,
+  OIDC_ISSUER,
   AUTH_SECRET,
 } from "$env/static/private";
 
@@ -14,11 +22,52 @@ interface CustomSession extends Session {
   accessToken?: string;
 }
 
+// Define the interface for OIDC provider options
+interface OIDCProviderConfig extends OAuthUserConfig<any> {
+  issuer: string;
+  wellKnown?: string;
+}
+
+// Define OIDC provider function
+function OIDCProvider(options: OIDCProviderConfig): OAuthConfig<any> {
+  return {
+    id: "oidc",
+    name: "pramari",
+    type: "oauth",
+    wellKnown: `${options.issuer}/o/.well-known/openid-configuration`,
+    // options.wellKnown ||
+    authorization: { params: { scope: "openid email profile" } },
+    idToken: true,
+    checks: ["pkce", "state"],
+    profile(profile) {
+      return {
+        id: profile.sub,
+        name: profile.name || profile.preferred_username,
+        email: profile.email,
+        image: profile.picture,
+      };
+    },
+    style: {
+      // logo: "/company-logo.png",
+      // logoDark: "/company-logo-dark.png",
+      bg: "#0F172A",
+      text: "#FFFFFF",
+    },
+    options,
+  };
+}
+
 export const { handle, signIn, signOut } = SvelteKitAuth({
   providers: [
     Google({
       clientId: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
+    }) as Provider,
+    // Generic OIDC provider
+    OIDCProvider({
+      clientId: PRAMARI_CLIENT_ID,
+      clientSecret: PRAMARI_CLIENT_SECRET,
+      issuer: OIDC_ISSUER,
     }) as Provider,
     // Add other providers here
   ],

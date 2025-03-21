@@ -14,4 +14,5 @@
     {#if data.user.image}
         <img src={data.user.image} alt="Profile picture" />
     {/if}
+    {JSON.stringify(data.user, null, 2)}
 {/if}
