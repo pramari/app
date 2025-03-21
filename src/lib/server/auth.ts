@@ -67,10 +67,12 @@ function OIDCProvider(options: OIDCProviderConfig): OAuthConfig<any> {
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
   providers: [
+    /*
     Google({
       clientId: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
     }) as Provider,
+    */
     // Generic OIDC provider
     OIDCProvider({
       clientId: PRAMARI_CLIENT_ID,
