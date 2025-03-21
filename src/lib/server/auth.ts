@@ -36,9 +36,17 @@ function OIDCProvider(options: OIDCProviderConfig): OAuthConfig<any> {
     type: "oauth",
     wellKnown: `${options.issuer}/o/.well-known/openid-configuration`,
     // options.wellKnown ||
-    authorization: { params: { scope: "openid email profile" } },
+    authorization: { params: { scope: "openid email userinfo" } },
     idToken: true,
     checks: ["pkce", "state"],
+    userinfo: async (token) => {
+      const response = await fetch(`${options.issuer}/o/userinfo`, {
+        headers: {
+          Authorization: `Bearer ${token.accessToken}`,
+        },
+      });
+      return response.json();
+    },
     profile(profile) {
       return {
         id: profile.sub,
