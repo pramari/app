@@ -1,6 +1,8 @@
 <!-- src/lib/components/rpg/RPGGame.svelte -->
 <script>
     import Character from "./Character.svelte";
+    import MapView from "./MapView.svelte";
+    import RasterMapView from "./RasterMapView.svelte";
     import Interaction from "./Interaction.svelte";
     import StoryEngine from "./StoryEngine.svelte";
     import CharacterCreation from "./CharacterCreation.svelte";
@@ -9,15 +11,38 @@
         getClassById,
     } from "$lib/components/stories/classes.js";
     import { getSkillInfo } from "$lib/components/stories/skills.js";
+    import {
+        getScene,
+        getSceneForLocation,
+    } from "$lib/components/stories/utils.js";
     import { onMount } from "svelte";
 
     // Import the story
     import { gameStory } from "$lib/components/stories/mainStory.js";
 
     let player = null;
+    let mapMode = "raster"; // 'node' or 'raster'
+    let playerMapPosition = { x: 200, y: 150 }; // Default position on raster map
     let gameStarted = false;
     let currentScene = null;
+    let currentLocation = null;
     let activeInteraction = null;
+    let showingMap = false;
+
+    // Initialize player position from the story data
+    $: if (gameStory.map.rasterMap && !gameStarted) {
+        playerMapPosition = gameStory.map.rasterMap.startingPosition || {
+            x: 800,
+            y: 600,
+        };
+    }
+
+    // Game progress tracking
+    let gameProgress = {
+        visitedLocations: [],
+        completedQuests: [],
+        discoveredLocations: [],
+    };
 
     function startGame(characterData) {
         player = {
@@ -26,13 +51,29 @@
         };
         gameStarted = true;
         currentScene = gameStory.scenes[gameStory.startingScene];
+        currentLocation = gameStory.map.locations[gameStory.startingLocation];
+
+        // Initialize player position on the map
+        if (
+            gameStory.map.rasterMap &&
+            gameStory.map.rasterMap.startingPosition
+        ) {
+            playerMapPosition = { ...gameStory.map.rasterMap.startingPosition };
+        }
 
         console.log("Game started with:", player);
+        console.log("Current location:", currentLocation);
         console.log("Current scene:", currentScene);
     }
 
     function makeChoice(choice) {
         console.log("Player chose:", choice);
+
+        // Check if this choice opens the map
+        if (choice.showMap) {
+            showingMap = true;
+            return;
+        }
 
         // Process skill checks if needed
         if (choice.skillCheck) {
@@ -45,22 +86,176 @@
             currentScene = success
                 ? gameStory.scenes[choice.skillCheck.successScene]
                 : gameStory.scenes[choice.skillCheck.failScene];
-        } else {
+
+            // Update location if the scene has a different location
+            if (
+                currentScene.location &&
+                currentScene.location !== currentLocation
+            ) {
+                travelToLocation(currentScene.location);
+            }
+        } else if (choice.nextScene) {
             // Regular choice
             currentScene = gameStory.scenes[choice.nextScene];
+
+            // Update location if the scene has a different location
+            if (
+                currentScene.location &&
+                currentScene.location !== currentLocation
+            ) {
+                travelToLocation(currentScene.location);
+            } /*
+          else {
+            // Regular choice
+            currentScene = gameStory.scenes[choice.nextScene];
+          */
+
+            // Apply consequences
+            if (choice.consequences) {
+                if (choice.consequences.experience) {
+                    gainExperience(choice.consequences.experience);
+                }
+
+                if (choice.consequences.items) {
+                    choice.consequences.items.forEach((item) => {
+                        player.inventory.push(item);
+                    });
+                }
+
+                if (choice.consequences.revealLocation) {
+                    revealLocation(choice.consequences.revealLocation);
+                }
+
+                if (choice.consequences.quest) {
+                    completeQuest(choice.consequences.quest);
+                }
+            }
+        }
+        // If the scene has a different location, update currentLocation
+        if (
+            currentScene.location &&
+            currentScene.location !== currentLocation
+        ) {
+            currentLocation = currentScene.location;
+        }
+    }
+    // Handle area interaction in raster map
+    function handleAreaEntered(areaId, area) {
+        console.log(`Callback for Entered area: ${areaId}`);
+
+        // If this area has a scene associated, update the current scene name
+        // (but don't switch to it yet - just make it available for "Explore" option)
+        if (area.sceneId) {
+            // Store the current area for potential scene activation
+            currentArea = area;
+        }
+    }
+
+    function handleAreaLeft(areaId) {
+        console.log(`Callback for Left area: ${areaId}`);
+        if (currentArea && currentArea.id === areaId) {
+            currentArea = null;
+        }
+    }
+
+    // Track the current area the player is in
+    let currentArea = null;
+
+    // Function to explore the current area
+    function exploreCurrentArea() {
+        if (currentArea && currentArea.sceneId) {
+            // Get the scene for this area
+            const areaScene = gameStory.scenes[currentArea.sceneId];
+
+            if (areaScene) {
+                currentScene = areaScene;
+                showingMap = false;
+
+                // Update location
+                if (areaScene.location) {
+                    currentLocation = areaScene.location;
+
+                    // Add to visited locations
+                    if (
+                        !gameProgress.visitedLocations.includes(currentLocation)
+                    ) {
+                        gameProgress.visitedLocations = [
+                            ...gameProgress.visitedLocations,
+                            currentLocation,
+                        ];
+                    }
+                }
+            }
+        }
+    }
+
+    // Toggle map mode
+    function toggleMapMode() {
+        mapMode = mapMode === "node" ? "raster" : "node";
+    }
+    // Function to close the map
+    function closeMap() {
+        showingMap = false;
+    }
+
+    function travelToLocation(locationId) {
+        // Update current location
+        currentLocation = locationId;
+
+        // Add to visited locations if not already there
+        if (!gameProgress.visitedLocations.includes(locationId)) {
+            gameProgress.visitedLocations = [
+                ...gameProgress.visitedLocations,
+                locationId,
+            ];
         }
 
-        // Apply consequences
-        if (choice.consequences) {
-            if (choice.consequences.experience) {
-                gainExperience(choice.consequences.experience);
-            }
+        // Close map view
+        showingMap = false;
 
-            if (choice.consequences.items) {
-                choice.consequences.items.forEach((item) => {
-                    player.inventory.push(item);
-                });
-            }
+        // Get the scene for this location
+        const locationScene = getSceneForLocation(locationId);
+
+        if (locationScene) {
+            currentScene = locationScene;
+        } else {
+            console.error(`No scene found for location: ${locationId}`);
+            // Create a generic scene for this location
+            currentScene = {
+                title:
+                    gameStory.map.locations[locationId]?.name ||
+                    "Unknown Location",
+                description:
+                    gameStory.map.locations[locationId]?.description ||
+                    "You arrive at your destination.",
+                location: locationId,
+                choices: [
+                    {
+                        text: "Travel to another location",
+                        showMap: true,
+                    },
+                ],
+            };
+        }
+    }
+
+    function handleLocationSelect(locationId) {
+        console.log("Selected location:", locationId);
+        travelToLocation(locationId);
+    }
+
+    function revealLocation(locationId) {
+        if (!progress.discoveredLocations.includes(locationId)) {
+            progress.discoveredLocations = [
+                ...progress.discoveredLocations,
+                locationId,
+            ];
+        }
+    }
+
+    function completeQuest(questId) {
+        if (!progress.completedQuests.includes(questId)) {
+            progress.completedQuests = [...progress.completedQuests, questId];
         }
     }
 
@@ -123,22 +318,100 @@
         <div class="game-container">
             <div class="character-panel">
                 <Character {player} {spendSkillPoint} />
+                <!-- Add a button to open the map -->
+                <div class="map-button-container">
+                    <button
+                        class="show-map-button"
+                        on:click={() => (showingMap = true)}
+                    >
+                        Open World Map
+                    </button>
+                </div>
             </div>
 
             <div class="story-panel">
-                {#if activeInteraction}
+                {#if showingMap}
+                    <div class="map-mode-controls">
+                        <button
+                            class="map-mode-button"
+                            class:active={mapMode === "node"}
+                            on:click={() => (mapMode = "node")}
+                        >
+                            Location Map
+                        </button>
+                        <button
+                            class="map-mode-button"
+                            class:active={mapMode === "raster"}
+                            on:click={() => (mapMode = "raster")}
+                        >
+                            Free Movement Map
+                        </button>
+                    </div>
+
+                    {#if mapMode === "node"}
+                        <!-- Render the MapView component when showingMap is true -->
+                        <MapView
+                            {currentLocation}
+                            mapData={gameStory.map}
+                            onLocationSelect={handleLocationSelect}
+                            onClose={closeMap}
+                            inventory={player.inventory || []}
+                            progress={gameProgress}
+                        />
+                    {:else}
+                        <RasterMapView
+                            mapData={gameStory.map.rasterMap}
+                            playerPosition={playerMapPosition}
+                            onClose={closeMap}
+                            onAreaEntered={handleAreaEntered}
+                            onAreaLeft={handleAreaLeft}
+                        />
+                        {#if currentArea}
+                            <div class="current-area-info">
+                                <h3>{currentArea.name}</h3>
+                                <p>{currentArea.description}</p>
+                                <button
+                                    class="explore-button"
+                                    on:click={exploreCurrentArea}
+                                >
+                                    Explore {currentArea.name}
+                                </button>
+                            </div>
+                        {/if}
+                    {/if}
+                {:else if activeInteraction}
                     <Interaction
                         character={activeInteraction}
                         {player}
                         onDialogueEnd={endInteraction}
                     />
-                {:else}
+                {:else if currentScene}
                     <StoryEngine
                         scene={currentScene}
                         {makeChoice}
                         {player}
                         onInteract={startInteraction}
                     />
+                {:else}
+                    <div class="error-scene">
+                        <h2>Scene Error</h2>
+                        <p>
+                            The current scene could not be loaded. This might be
+                            a bug in the game.
+                        </p>
+                        <button
+                            on:click={() => {
+                                const startingScene =
+                                    gameStory.scenes[gameStory.startingScene];
+                                if (startingScene) {
+                                    currentScene = startingScene;
+                                    currentLocation =
+                                        gameStory.startingLocation ||
+                                        gameStory.startingScene;
+                                }
+                            }}>Return to Starting Area</button
+                        >
+                    </div>
                 {/if}
             </div>
         </div>
@@ -172,5 +445,76 @@
         border: 1px solid #ddd;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .map-mode-controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .map-mode-button {
+        flex: 1;
+        padding: 10px;
+        background: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .map-mode-button.active {
+        background: #6b5b95;
+        color: white;
+        border-color: #6b5b95;
+    }
+
+    .current-area-info {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        border: 1px solid #ddd;
+    }
+
+    .current-area-info h3 {
+        margin-top: 0;
+        color: #333;
+    }
+
+    .explore-button {
+        background: #4a6;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-top: 10px;
+    }
+
+    .explore-button:hover {
+        background: #3b5;
+    }
+
+    .map-button-container {
+        margin-top: 15px;
+    }
+
+    .show-map-button {
+        width: 100%;
+        padding: 12px;
+        background: #6b5b95;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.2s;
+    }
+
+    .show-map-button:hover {
+        background: #7d6aa9;
     }
 </style>

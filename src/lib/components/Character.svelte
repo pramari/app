@@ -5,6 +5,7 @@
         skillCategories,
         getSkillInfo,
     } from "$lib/components/stories/skills.js";
+    import { characterClasses } from "$lib/components/stories/classes.js";
 
     export let player;
     export let spendSkillPoint;
@@ -41,7 +42,7 @@
     <h2>{player.name}</h2>
     <div class="character-class">
         <span class="label">Class:</span>
-        {player.class.name}
+        {player.className}
     </div>
 
     <div class="character-level">

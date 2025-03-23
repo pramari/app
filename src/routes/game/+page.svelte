@@ -13,9 +13,4 @@
         margin: 0 auto;
         padding: 20px;
     }
-
-    h1 {
-        text-align: center;
-        color: #333;
-    }
 </style>

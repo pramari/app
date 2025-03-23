@@ -11,11 +11,10 @@
     let characterName = "";
     let selectedClassId = characterClasses[0].id;
 
-    $: selectedClass = characterClasses.find((c) => c.id === selectedClassId);
-
     function handleClassSelection(classId) {
-        selectedClass = classId;
+        selectedClassId = classId;
     }
+    $: selectedClass = characterClasses.find((c) => c.id === selectedClassId);
 
     function createCharacter() {
         if (characterName.trim() === "") {
@@ -71,10 +70,11 @@
 
         <div class="class-options">
             {#each characterClasses as characterClass}
-                <div
+                <button
+                    aria-label={characterClass}
                     class="class-option"
                     class:selected={selectedClassId === characterClass.id}
-                    on:click={() => handleClassSelection(characterClass.id)}
+                    onclick={() => handleClassSelection(characterClass.id)}
                 >
                     {#if characterClass.portrait}
                         <img
@@ -103,12 +103,12 @@
                             {/each}
                         </ul>
                     </div>
-                </div>
+                </button>
             {/each}
         </div>
     </div>
 
-    <button class="create-button" on:click={createCharacter}>
+    <button class="create-button" onclick={createCharacter}>
         Begin Your Adventure
     </button>
 </div>
