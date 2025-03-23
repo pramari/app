@@ -72,7 +72,7 @@
                             class="flex items-center space-x-2 py-2"
                         >
                             <img
-                                src={$page.data.session.user?.image}
+                                src={$page.data.session.user?.img}
                                 alt="Profile"
                                 class="w-8 h-8 rounded-full"
                             />
@@ -93,17 +93,6 @@
                 </div>
             </div>
         {/if}
-        <!-- --
-        {#if $page.data.session}
-            <span>Signed in as {$page.data.session.user?.name || "User"}</span>
-            <form action="/auth/signout" method="POST">
-                <button type="submit">Sign out</button>
-            </form>
-        {:else}
-            <form action="/auth/signin" method="POST">
-                <button type="submit">Sign in</button>
-            </form>
-        {/if} -->
     </div>
 </nav>
 

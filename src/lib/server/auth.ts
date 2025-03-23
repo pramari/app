@@ -8,13 +8,12 @@ import type { OAuthConfig, OAuthUserConfig } from "@auth/core/providers";
 import type { Provider } from "@auth/core/providers";
 import type { Session, User } from "@auth/core/types";
 import {
-  GOOGLE_CLIENT_ID,
-  GOOGLE_CLIENT_SECRET,
   PRAMARI_CLIENT_ID,
   PRAMARI_CLIENT_SECRET,
   OIDC_ISSUER,
   AUTH_SECRET,
 } from "$env/static/private";
+import Resend from "@auth/core/providers/resend";
 
 // Optional: Define custom session type if you extend the default session
 interface CustomSession extends Session {
@@ -35,7 +34,6 @@ function OIDCProvider(options: OIDCProviderConfig): OAuthConfig<any> {
     name: "pramari",
     type: "oauth",
     wellKnown: `${options.issuer}/o/.well-known/openid-configuration`,
-    // options.wellKnown ||
     authorization: { params: { scope: "openid email userinfo" } },
     idToken: true,
     checks: ["pkce", "state"],
@@ -50,9 +48,12 @@ function OIDCProvider(options: OIDCProviderConfig): OAuthConfig<any> {
     profile(profile) {
       return {
         id: profile.sub,
-        name: profile.name || profile.preferred_username,
+        name: profile.name || profile.username,
+        first_name: profile.first_name,
+        last_name: profile.last_name,
         email: profile.email,
-        image: profile.picture,
+        image: profile.image,
+        permissions: profile.permissions,
       };
     },
     style: {
@@ -89,12 +90,20 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
       return {
         ...session,
         accessToken: token.accessToken as string,
+        first_name: token.first_name as string | undefined,
+        last_name: token.last_name as string | undefined,
+        permissions: token.permissions as string[] | undefined,
       };
     },
-    async jwt({ token, account }) {
+    async jwt({ token, user, account }) {
       // Save the access token from the OAuth provider to the JWT
       if (account) {
         token.accessToken = account.access_token;
+      }
+      if (user) {
+        token.first_name = user.first_name;
+        token.last_name = user.last_name;
+        token.permissions = user.permissions;
       }
       return token;
     },

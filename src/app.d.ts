@@ -8,14 +8,14 @@ declare global {
     }
     // interface PageData {}
     // interface PageState {}
-    interface Platform {
-      env?: {
-        GOOGLE_CLIENT_ID: string;
-        GOOGLE_CLIENT_SECRET: string;
-        AUTH_SECRET: string;
-        // Add any other environment variables here
-      };
-    }
+    // interface Platform {
+    //  env?: {
+    //    GOOGLE_CLIENT_ID: string;
+    //    GOOGLE_CLIENT_SECRET: string;
+    //    AUTH_SECRET: string;
+    // Add any other environment variables here
+    //  };
+    // }
   }
 }
 
