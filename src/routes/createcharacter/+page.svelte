@@ -1,23 +1,41 @@
 <!-- CharacterCreation.svelte -->
 <script>
-    import { characterClasses } from "$lib/components/stories/classes.js";
+    import { onMount } from "svelte";
+
+    import { characterClasses } from "$lib/components/stories/classes.ts";
     import {
         skills,
         skillCategories,
         getSkillInfo,
     } from "$lib/components/stories/skills.js";
-    export let startGame;
+    import {
+        characterStore,
+        updateCharacter,
+        updateCharacterName,
+        updateCharacterClass,
+    } from "$lib/stores/character.ts";
 
-    let characterName = "";
+    import { goto } from "$app/navigation";
+
+    $: character = $characterStore;
+
+    onMount(() => {});
+
     let selectedClassId = characterClasses[0].id;
+    $: selectedClass = characterClasses.find((c) => c.id === selectedClassId);
 
     function handleClassSelection(classId) {
         selectedClassId = classId;
+        const classObject = characterClasses.find((c) => c.id === classId);
+        updateCharacterClass(classId, classObject);
     }
-    $: selectedClass = characterClasses.find((c) => c.id === selectedClassId);
 
-    function createCharacter() {
-        if (characterName.trim() === "") {
+    function handleNameChange(event) {
+        updateCharacter({ name: event.target.value });
+    }
+
+    async function createCharacter() {
+        if ($characterStore.name.trim() === "") {
             alert("Please enter a character name");
             return;
         }
@@ -32,23 +50,25 @@
         // Debug log
         console.log("Creating character with class:", selectedClass);
 
-        const character = {
-            name: characterName,
-            class: selectedClass.id,
-            className: selectedClass.name,
-            skills: { ...selectedClass.startingSkills },
-            stats: { ...selectedClass.startingStats },
-            skillPoints: 2,
-            level: 1,
-            experience: 0,
-            abilities: Array.isArray(selectedClass.abilities)
-                ? selectedClass.abilities
-                      .filter((ability) => ability.unlockLevel === 1)
-                      .map((ability) => ability.id)
-                : [],
-        };
+        const character = characterClasses[selectedClassId];
+
+        try {
+            // In a real app, you might save to a server here
+            const response = await fetch("/api/characters", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify($characterStore),
+            });
+            const data = await response.json();
+
+            // For now, we'll just navigate to the game
+        } catch (error) {
+            console.error("Error creating character:", error);
+            // alert("Failed to create character. Please try again.");
+            // todo
+            goto("/game");
+        }
         console.log("Character created:", character);
-        startGame(character);
     }
 </script>
 
@@ -60,8 +80,9 @@
         <input
             id="character-name"
             type="text"
-            bind:value={characterName}
+            bind:value={$characterStore.name}
             placeholder="Enter name..."
+            oninput={handleNameChange}
         />
     </div>
 

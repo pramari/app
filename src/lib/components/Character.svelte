@@ -5,9 +5,8 @@
         skillCategories,
         getSkillInfo,
     } from "$lib/components/stories/skills.js";
-    import { characterClasses } from "$lib/components/stories/classes.js";
-
-    export let player;
+    import { characterClasses } from "$lib/components/stories/classes.ts";
+    import { characterStore } from "$lib/stores/character.ts";
     export let spendSkillPoint;
 
     let expandedSection = "stats"; // stats, inventory, skills, abilities
@@ -17,7 +16,7 @@
     }
 
     // Group skills by category for better display
-    $: groupedSkills = Object.entries(player?.skills || {}).reduce(
+    $: groupedSkills = Object.entries($characterStore?.skills || {}).reduce(
         (acc, [skillId, value]) => {
             const skillInfo = getSkillInfo(skillId);
             const category = skillInfo.category;
@@ -39,39 +38,40 @@
 </script>
 
 <div class="character-sheet">
-    <h2>{player.name}</h2>
+    <h2>{$characterStore.name}</h2>
     <div class="character-class">
         <span class="label">Class:</span>
-        {player.className}
+        {$characterStore.className}
     </div>
 
     <div class="character-level">
         <span class="label">Level:</span>
-        {player.level}
+        {$characterStore.level}
         <div class="xp-bar">
             <div
                 class="xp-fill"
-                style="width: {((player.experience % (player.level * 100)) /
-                    (player.level * 100)) *
+                style="width: {(($characterStore.experience %
+                    ($characterStore.level * 100)) /
+                    ($characterStore.level * 100)) *
                     100}%"
             ></div>
         </div>
         <div class="xp-text">
-            XP: {player.experience} / {player.level * 100}
+            XP: {$characterStore.experience} / {$characterStore.level * 100}
         </div>
     </div>
 
-    <div class="section-header" on:click={() => toggleSection("stats")}>
+    <a class="section-header" onclick={() => toggleSection("stats")}>
         <h3>Character Stats</h3>
         <span class="toggle-icon"
             >{expandedSection === "stats" ? "▼" : "▶"}</span
         >
-    </div>
+    </a>
 
-    {#if expandedSection === "stats" && player.stats}
+    {#if expandedSection === "stats" && $characterStore.stats}
         <div class="section-content">
             <div class="stats-grid">
-                {#each Object.entries(player.stats) as [stat, value]}
+                {#each Object.entries($characterStore.stats) as [stat, value]}
                     <div class="stat-item">
                         <span class="stat-name"
                             >{stat.charAt(0).toUpperCase() +
@@ -84,10 +84,10 @@
         </div>
     {/if}
 
-    <div class="section-header" on:click={() => toggleSection("skills")}>
+    <div class="section-header" onclick={() => toggleSection("skills")}>
         <h3>
-            Skills {player.skillPoints
-                ? `(${player.skillPoints} points available)`
+            Skills {$characterStore.skillPoints
+                ? `(${$characterStore.skillPoints} points available)`
                 : ""}
         </h3>
         <span class="toggle-icon"
@@ -107,10 +107,10 @@
                                 <span class="skill-icon">{skill.icon}</span>
                                 <span class="skill-name">{skill.name}</span>
                                 <span class="skill-value">{skill.value}</span>
-                                {#if (player.skillPoints || 0) > 0}
+                                {#if ($characterStore.skillPoints || 0) > 0}
                                     <button
                                         class="improve-skill"
-                                        on:click={() =>
+                                        onclick={() =>
                                             spendSkillPoint(skill.id)}>+</button
                                     >
                                 {/if}
@@ -122,21 +122,22 @@
         </div>
     {/if}
 
-    <div class="section-header" on:click={() => toggleSection("abilities")}>
+    <a class="section-header" onclick={() => toggleSection("abilities")}>
         <h3>Abilities</h3>
         <span class="toggle-icon"
             >{expandedSection === "abilities" ? "▼" : "▶"}</span
         >
-    </div>
+    </a>
 
-    {#if expandedSection === "abilities" && player.abilities}
+    {#if expandedSection === "abilities" && $characterStore.abilities}
         <div class="section-content">
             <div class="abilities-list">
-                {#each player.abilities as abilityId}
+                {#each $characterStore.abilities as abilityId}
                     {@const ability = (
-                        (player.class &&
-                            characterClasses.find((c) => c.id === player.class)
-                                ?.abilities) ||
+                        ($characterStore.class &&
+                            characterClasses.find(
+                                (c) => c.id === $characterStore.class,
+                            )?.abilities) ||
                         []
                     ).find((a) => a.id === abilityId)}
                     {#if ability}
@@ -150,7 +151,7 @@
         </div>
     {/if}
 
-    <div class="section-header" on:click={() => toggleSection("inventory")}>
+    <div class="section-header" onclick={() => toggleSection("inventory")}>
         <h3>Inventory</h3>
         <span class="toggle-icon"
             >{expandedSection === "inventory" ? "▼" : "▶"}</span
@@ -159,11 +160,11 @@
 
     {#if expandedSection === "inventory"}
         <div class="section-content">
-            {#if player.inventory.length === 0}
+            {#if $characterStore.inventory.length === 0}
                 <p>Your inventory is empty.</p>
             {:else}
                 <ul class="inventory-list">
-                    {#each player.inventory as item}
+                    {#each $characterStore.inventory as item}
                         <li>
                             {item.name}
                             {#if item.description}<span class="item-description"

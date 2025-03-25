@@ -1,15 +1,15 @@
 <!-- src/lib/components/rpg/RPGGame.svelte -->
 <script>
+    import { characterStore } from "$lib/stores/character";
     import Character from "./Character.svelte";
     import MapView from "./MapView.svelte";
     import RasterMapView from "./RasterMapView.svelte";
     import Interaction from "./Interaction.svelte";
     import StoryEngine from "./StoryEngine.svelte";
-    import CharacterCreation from "./CharacterCreation.svelte";
     import {
         characterClasses,
         getClassById,
-    } from "$lib/components/stories/classes.js";
+    } from "$lib/components/stories/classes.ts";
     import { getSkillInfo } from "$lib/components/stories/skills.js";
     import {
         getScene,
@@ -21,7 +21,6 @@
     import { gameStory } from "$lib/components/stories/mainStory.js";
 
     let player = null;
-    let mapMode = "raster"; // 'node' or 'raster'
     let playerMapPosition = { x: 200, y: 150 }; // Default position on raster map
     let gameStarted = false;
     let currentScene = null;
@@ -104,11 +103,7 @@
                 currentScene.location !== currentLocation
             ) {
                 travelToLocation(currentScene.location);
-            } /*
-          else {
-            // Regular choice
-            currentScene = gameStory.scenes[choice.nextScene];
-          */
+            }
 
             // Apply consequences
             if (choice.consequences) {
@@ -189,10 +184,6 @@
         }
     }
 
-    // Toggle map mode
-    function toggleMapMode() {
-        mapMode = mapMode === "node" ? "raster" : "node";
-    }
     // Function to close the map
     function closeMap() {
         showingMap = false;
@@ -312,110 +303,77 @@
 </script>
 
 <div class="rpg-game">
-    {#if !gameStarted}
-        <CharacterCreation {startGame} />
-    {:else}
-        <div class="game-container">
-            <div class="character-panel">
-                <Character {player} {spendSkillPoint} />
-                <!-- Add a button to open the map -->
-                <div class="map-button-container">
-                    <button
-                        class="show-map-button"
-                        on:click={() => (showingMap = true)}
-                    >
-                        Open World Map
-                    </button>
-                </div>
-            </div>
-
-            <div class="story-panel">
-                {#if showingMap}
-                    <div class="map-mode-controls">
-                        <button
-                            class="map-mode-button"
-                            class:active={mapMode === "node"}
-                            on:click={() => (mapMode = "node")}
-                        >
-                            Location Map
-                        </button>
-                        <button
-                            class="map-mode-button"
-                            class:active={mapMode === "raster"}
-                            on:click={() => (mapMode = "raster")}
-                        >
-                            Free Movement Map
-                        </button>
-                    </div>
-
-                    {#if mapMode === "node"}
-                        <!-- Render the MapView component when showingMap is true -->
-                        <MapView
-                            {currentLocation}
-                            mapData={gameStory.map}
-                            onLocationSelect={handleLocationSelect}
-                            onClose={closeMap}
-                            inventory={player.inventory || []}
-                            progress={gameProgress}
-                        />
-                    {:else}
-                        <RasterMapView
-                            mapData={gameStory.map.rasterMap}
-                            playerPosition={playerMapPosition}
-                            onClose={closeMap}
-                            onAreaEntered={handleAreaEntered}
-                            onAreaLeft={handleAreaLeft}
-                        />
-                        {#if currentArea}
-                            <div class="current-area-info">
-                                <h3>{currentArea.name}</h3>
-                                <p>{currentArea.description}</p>
-                                <button
-                                    class="explore-button"
-                                    on:click={exploreCurrentArea}
-                                >
-                                    Explore {currentArea.name}
-                                </button>
-                            </div>
-                        {/if}
-                    {/if}
-                {:else if activeInteraction}
-                    <Interaction
-                        character={activeInteraction}
-                        {player}
-                        onDialogueEnd={endInteraction}
-                    />
-                {:else if currentScene}
-                    <StoryEngine
-                        scene={currentScene}
-                        {makeChoice}
-                        {player}
-                        onInteract={startInteraction}
-                    />
-                {:else}
-                    <div class="error-scene">
-                        <h2>Scene Error</h2>
-                        <p>
-                            The current scene could not be loaded. This might be
-                            a bug in the game.
-                        </p>
-                        <button
-                            on:click={() => {
-                                const startingScene =
-                                    gameStory.scenes[gameStory.startingScene];
-                                if (startingScene) {
-                                    currentScene = startingScene;
-                                    currentLocation =
-                                        gameStory.startingLocation ||
-                                        gameStory.startingScene;
-                                }
-                            }}>Return to Starting Area</button
-                        >
-                    </div>
-                {/if}
+    <div class="game-container">
+        <div class="character-panel">
+            <Character {player} {spendSkillPoint} />
+            <!-- Add a button to open the map -->
+            <div class="map-button-container">
+                <button
+                    class="show-map-button"
+                    on:click={() => (showingMap = true)}
+                >
+                    Open World Map
+                </button>
             </div>
         </div>
-    {/if}
+
+        <div class="story-panel">
+            {#if showingMap}
+                <RasterMapView
+                    mapData={gameStory.map.rasterMap}
+                    playerPosition={playerMapPosition}
+                    onClose={closeMap}
+                    onAreaEntered={handleAreaEntered}
+                    onAreaLeft={handleAreaLeft}
+                />
+                {#if currentArea}
+                    <div class="current-area-info">
+                        <h3>{currentArea.name}</h3>
+                        <p>{currentArea.description}</p>
+                        <button
+                            class="explore-button"
+                            on:click={exploreCurrentArea}
+                        >
+                            Explore {currentArea.name}
+                        </button>
+                    </div>
+                {/if}
+            {:else if activeInteraction}
+                <Interaction
+                    character={activeInteraction}
+                    {player}
+                    onDialogueEnd={endInteraction}
+                />
+            {:else if currentScene}
+                <StoryEngine
+                    scene={currentScene}
+                    {makeChoice}
+                    {player}
+                    onInteract={startInteraction}
+                />
+            {:else}
+                <div class="error-scene">
+                    <h2>Scene Error</h2>
+                    <p>
+                        The current scene could not be loaded. This might be a
+                        bug in the game.
+                    </p>
+                    <button
+                        on:click={() => {
+                            const startingScene =
+                                gameStory.scenes[gameStory.startingScene];
+                            if (startingScene) {
+                                currentScene = startingScene;
+                                currentLocation =
+                                    gameStory.startingLocation ||
+                                    gameStory.startingScene;
+                            }
+                        }}>Return to Starting Area</button
+                    >
+                </div>
+            {/if}
+        </div>
+    </div>
 </div>
 
 <style>
@@ -445,28 +403,6 @@
         border: 1px solid #ddd;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .map-mode-controls {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 15px;
-    }
-
-    .map-mode-button {
-        flex: 1;
-        padding: 10px;
-        background: #f0f0f0;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .map-mode-button.active {
-        background: #6b5b95;
-        color: white;
-        border-color: #6b5b95;
     }
 
     .current-area-info {
