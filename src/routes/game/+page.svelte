@@ -5,13 +5,7 @@
 </script>
 
 <main>
-    {#if $characterStore.name}
-        <h1>Welcome, {$characterStore.name}!</h1>
-        <RPGGame />
-    {:else}
-        <h1>Welcome!</h1>
-        
-    {/if}
+    <RPGGame />
 </main>
 
 <style>

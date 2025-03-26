@@ -1,40 +1,18 @@
 <!-- src/lib/components/rpg/Character.svelte -->
 <script>
-    import {
-        skills,
-        skillCategories,
-        getSkillInfo,
-    } from "$lib/components/stories/skills.js";
-    import { characterClasses } from "$lib/components/stories/classes.ts";
+    import { characterClasses } from "$lib/stories/characterclasses.ts";
     import { characterStore } from "$lib/stores/character.ts";
+    import Stats from "$lib/widgets/Stats.svelte";
+    import Skills from "$lib/widgets/Skills.svelte";
+    import Inventory from "$lib/widgets/Inventory.svelte";
+
     export let spendSkillPoint;
 
-    let expandedSection = "stats"; // stats, inventory, skills, abilities
+    export let expandedSection = "stats"; // stats, inventory, skills, abilities
 
     function toggleSection(section) {
         expandedSection = expandedSection === section ? null : section;
     }
-
-    // Group skills by category for better display
-    $: groupedSkills = Object.entries($characterStore?.skills || {}).reduce(
-        (acc, [skillId, value]) => {
-            const skillInfo = getSkillInfo(skillId);
-            const category = skillInfo.category;
-
-            if (!acc[category]) {
-                acc[category] = [];
-            }
-
-            acc[category].push({
-                id: skillId,
-                value,
-                ...skillInfo,
-            });
-
-            return acc;
-        },
-        {},
-    );
 </script>
 
 <div class="character-sheet">
@@ -61,30 +39,20 @@
         </div>
     </div>
 
-    <a class="section-header" onclick={() => toggleSection("stats")}>
-        <h3>Character Stats</h3>
-        <span class="toggle-icon"
-            >{expandedSection === "stats" ? "▼" : "▶"}</span
-        >
-    </a>
+    <div class="stats-section">
+        <button class="section-header" onclick={() => toggleSection("stats")}>
+            <h3>Character Stats</h3>
+            <span class="toggle-icon"
+                >{expandedSection === "stats" ? "▼" : "▶"}</span
+            >
+        </button>
 
-    {#if expandedSection === "stats" && $characterStore.stats}
-        <div class="section-content">
-            <div class="stats-grid">
-                {#each Object.entries($characterStore.stats) as [stat, value]}
-                    <div class="stat-item">
-                        <span class="stat-name"
-                            >{stat.charAt(0).toUpperCase() +
-                                stat.slice(1)}</span
-                        >
-                        <span class="stat-value">{value}</span>
-                    </div>
-                {/each}
-            </div>
-        </div>
-    {/if}
+        {#if expandedSection === "stats" && $characterStore.stats}
+            <Stats />
+        {/if}
+    </div>
 
-    <div class="section-header" onclick={() => toggleSection("skills")}>
+    <a class="section-header" onclick={() => toggleSection("skills")}>
         <h3>
             Skills {$characterStore.skillPoints
                 ? `(${$characterStore.skillPoints} points available)`
@@ -93,34 +61,9 @@
         <span class="toggle-icon"
             >{expandedSection === "skills" ? "▼" : "▶"}</span
         >
-    </div>
+    </a>
 
-    {#if expandedSection === "skills"}
-        <div class="section-content">
-            {#each Object.entries(groupedSkills) as [category, categorySkills]}
-                <div class="skill-category">
-                    <h4>{skillCategories[category]?.name || category}</h4>
-
-                    <div class="skills-list">
-                        {#each categorySkills as skill}
-                            <div class="skill-item" title={skill.description}>
-                                <span class="skill-icon">{skill.icon}</span>
-                                <span class="skill-name">{skill.name}</span>
-                                <span class="skill-value">{skill.value}</span>
-                                {#if ($characterStore.skillPoints || 0) > 0}
-                                    <button
-                                        class="improve-skill"
-                                        onclick={() =>
-                                            spendSkillPoint(skill.id)}>+</button
-                                    >
-                                {/if}
-                            </div>
-                        {/each}
-                    </div>
-                </div>
-            {/each}
-        </div>
-    {/if}
+    {#if expandedSection === "skills"}{/if}
 
     <a class="section-header" onclick={() => toggleSection("abilities")}>
         <h3>Abilities</h3>
@@ -151,30 +94,15 @@
         </div>
     {/if}
 
-    <div class="section-header" onclick={() => toggleSection("inventory")}>
+    <a class="section-header" onclick={() => toggleSection("inventory")}>
         <h3>Inventory</h3>
         <span class="toggle-icon"
             >{expandedSection === "inventory" ? "▼" : "▶"}</span
         >
-    </div>
+    </a>
 
     {#if expandedSection === "inventory"}
-        <div class="section-content">
-            {#if $characterStore.inventory.length === 0}
-                <p>Your inventory is empty.</p>
-            {:else}
-                <ul class="inventory-list">
-                    {#each $characterStore.inventory as item}
-                        <li>
-                            {item.name}
-                            {#if item.description}<span class="item-description"
-                                    >- {item.description}</span
-                                >{/if}
-                        </li>
-                    {/each}
-                </ul>
-            {/if}
-        </div>
+        <Inventory />
     {/if}
 </div>
 
@@ -228,60 +156,6 @@
         padding: 10px;
         background-color: #f5f5f5;
         border-radius: 0 0 4px 4px;
-    }
-
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-    }
-
-    .stat-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 5px;
-        background: rgba(255, 255, 255, 0.5);
-        border-radius: 4px;
-    }
-
-    .skill-category {
-        margin-bottom: 15px;
-    }
-
-    .skill-category h4 {
-        margin: 0 0 5px 0;
-        color: #444;
-        font-size: 0.9em;
-        border-bottom: 1px solid #ddd;
-    }
-
-    .skill-item {
-        display: flex;
-        align-items: center;
-        padding: 5px 0;
-        border-bottom: 1px dashed #ddd;
-    }
-
-    .skill-icon {
-        width: 24px;
-        text-align: center;
-        margin-right: 5px;
-    }
-
-    .skill-name {
-        flex: 1;
-    }
-
-    .improve-skill {
-        background-color: #4a6;
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 24px;
-        height: 24px;
-        cursor: pointer;
-        font-weight: bold;
-        margin-left: 5px;
     }
 
     .ability-item {

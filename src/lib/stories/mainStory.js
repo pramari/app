@@ -2,8 +2,8 @@
 
 export const gameStory = {
   title: "The Forgotten Kingdom",
-  startingScene: "village_square",
-  startingLocation: "village_square",
+  startingScene: "appartment",
+  startingLocation: "appartment",
 
   // Map configuration
   map: {
@@ -13,33 +13,30 @@ export const gameStory = {
 
     // Define all locations on the map
     locations: {
+      appartment: {
+        name: "Appartement",
+        description: "The place where you live",
+        icon: "🏠", // Emoji or custom icon
+      },
       village_square: {
         name: "Village Square",
         description: "The central gathering place of Willowbrook village.",
-        x: 400, // X coordinate on the map
-        y: 300, // Y coordinate on the map
         icon: "🏠", // Emoji or custom icon
       },
       tavern: {
         name: "Silver Tankard Tavern",
         description:
           "A cozy establishment where villagers gather for drinks and gossip.",
-        x: 350,
-        y: 200,
         icon: "🍺",
       },
       forest_path: {
         name: "Forest Path",
         description: "A winding trail leading into the dense woods.",
-        x: 500,
-        y: 150,
         icon: "🌲",
       },
       ancient_ruins: {
         name: "Ancient Ruins",
         description: "The crumbling remains of a once-grand structure.",
-        x: 620,
-        y: 100,
         icon: "🏛️",
         // Requires a specific quest or condition to discover
         discoveryConditions: {
@@ -49,50 +46,63 @@ export const gameStory = {
       market: {
         name: "Village Market",
         description: "Bustling stalls selling goods from surrounding farms.",
-        x: 450,
-        y: 360,
         icon: "🛒",
       },
       blacksmith: {
         name: "Blacksmith",
         description:
           "The forge glows with heat as weapons and tools are crafted.",
-        x: 320,
-        y: 340,
         icon: "⚒️",
       },
       farmlands: {
         name: "Farmlands",
         description: "Fertile fields where villagers grow crops.",
-        x: 250,
-        y: 400,
         icon: "🌾",
       },
       river_crossing: {
         name: "River Crossing",
         description: "A stone bridge spanning the gentle stream.",
-        x: 550,
-        y: 380,
         icon: "🌉",
       },
       witch_hut: {
         name: "Herbalist's Hut",
         description: "A small cottage surrounded by gardens of strange plants.",
-        x: 650,
-        y: 300,
         icon: "🧙‍♀️",
       },
       agency_euro: {
         name: "Model Agency",
         description: "",
-        x: 100,
-        y: 100,
-        icon; "👗"
-      }
+        icon: "👗",
+        services: ["modeling", "styling", "casting"],
+      },
+      studio: {
+        name: "Model Studio",
+        description: "",
+        icon: "📸",
+        services: ["filming", "photography"],
+      },
+      doctor: {
+        name: "Doctor",
+        description: "",
+        icon: "🩺",
+        services: [
+          "vaccination",
+          "consultation",
+          "treatment",
+          "circumcision",
+          "breast augmentation",
+          "family planning",
+          "laboratory",
+          "pharmacy",
+          "ultrasound",
+          "x-ray",
+        ],
+      },
     },
 
     // Define paths between locations
-    paths: [
+    /*    paths: [
+
       { from: "village_square", to: "tavern", bidirectional: true },
       { from: "village_square", to: "market", bidirectional: true },
       { from: "village_square", to: "blacksmith", bidirectional: true },
@@ -107,7 +117,7 @@ export const gameStory = {
         hidden: true,
       },
       { from: "river_crossing", to: "witch_hut", bidirectional: true },
-    ],
+      ], */
 
     // Raster map data
     rasterMap: {
@@ -219,6 +229,14 @@ export const gameStory = {
       // Interactive areas that trigger events/scenes
       interactiveAreas: [
         {
+          id: "appartement",
+          type: "circle",
+          x: 200,
+          y: 200,
+          name: "Appartement",
+          sceneId: "appartement",
+        },
+        {
           id: "village_square",
           type: "circle",
           x: 800,
@@ -316,6 +334,64 @@ export const gameStory = {
 
   // Scenes definition
   scenes: {
+    appartment: {
+      title: "Your Appartment",
+      description:
+        "You stand in the small, cozy appartment you call home. The fire crackles in the hearth, casting a warm glow over the room.",
+      image: "/images/locations/appartment.jpg",
+      location: "appartment",
+      characters: [
+        {
+          id: "flatmate_1",
+          name: "Sonja",
+          description: "The obvious goth girl.",
+        },
+        {
+          id: "flatmate_2",
+          name: "Carmen",
+          description: "The clean economics student.",
+        },
+        {
+          id: "flatmate_3",
+          name: "Frank",
+          description: "The quiet guy who is always reading.",
+        },
+      ],
+      choices: [
+        {
+          text: "Go to the village square",
+          nextScene: "village_square",
+        },
+        {
+          text: "Rest by the fire",
+          nextScene: "rest_by_fire",
+        },
+        {
+          text: "Check your inventory",
+          nextScene: "inventory",
+        },
+        {
+          text: "Look out the window",
+          nextScene: "window_view",
+        },
+        {
+          text: "Practice for next scene",
+          requirements: [
+            {
+              skills: [
+                {
+                  acting: true,
+                },
+              ],
+              items: ["script"],
+              experience: 20,
+              location_discovered: "studio",
+            },
+          ],
+          nextScene: "practice",
+        },
+      ],
+    },
     village_square: {
       title: "Village Square",
       description:

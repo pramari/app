@@ -8,12 +8,7 @@
         getSkillInfo,
     } from "$lib/stories/skills.ts";
 
-    import {
-        characterStore,
-        updateCharacter,
-        updateCharacterName,
-        updateCharacterClass,
-    } from "$lib/stores/character.ts";
+    import { characterStore, updateCharacter } from "$lib/stores/character.ts";
     import { characterClasses } from "$lib/stories/characterClasses.ts";
 
     import { goto } from "$app/navigation";
@@ -25,10 +20,135 @@
     let selectedClassId = characterClasses[0].id; // select first class by default
     $: selectedClass = characterClasses.find((c) => c.id === selectedClassId); // get selected class object
 
+    function generateRandomName() {
+        const fashionFirstNames = [
+            "Aria",
+            "Blaze",
+            "Coco",
+            "Dior",
+            "Echo",
+            "Fendi",
+            "Gigi",
+            "Harper",
+            "Indigo",
+            "Jett",
+            "Kenzo",
+            "Lux",
+            "Milan",
+            "Nova",
+            "Onyx",
+            "Prada",
+            "Quinn",
+            "Rogue",
+            "Sloane",
+            "Tyra",
+            "Urban",
+            "Vogue",
+            "Willow",
+            "Xander",
+            "Yves",
+            "Zara",
+        ];
+
+        const fashionLastNames = [
+            "Armani",
+            "Belmont",
+            "Chanel",
+            "Deville",
+            "Ellison",
+            "Ferragamo",
+            "Gucci",
+            "Herrera",
+            "Ivory",
+            "Jacobs",
+            "Klein",
+            "Laurent",
+            "McQueen",
+            "Novak",
+            "Osborne",
+            "Posen",
+            "Quinn",
+            "Rykiel",
+            "Simons",
+            "Tahari",
+            "Urbana",
+            "Valentino",
+            "Wang",
+            "Xavier",
+            "Young",
+        ];
+
+        const fashionTitles = [
+            "the Avant-Garde",
+            "of the Runway",
+            "Couture",
+            "the Trendsetter",
+            "the Iconic",
+            "of House Luxe",
+            "the Stylish",
+            "en Vogue",
+            "the Fashionista",
+            "Haute",
+            "the Visionary",
+            "of Milano",
+            "the Glamorous",
+            "of Paris",
+            "Bespoke",
+        ];
+
+        // Random chance of different name formats
+        const nameFormat = Math.random();
+        let name = "";
+
+        if (nameFormat < 0.4) {
+            // Single chic name (40% chance)
+            name =
+                fashionFirstNames[
+                    Math.floor(Math.random() * fashionFirstNames.length)
+                ];
+        } else if (nameFormat < 0.7) {
+            // First and last name (30% chance)
+            const firstName =
+                fashionFirstNames[
+                    Math.floor(Math.random() * fashionFirstNames.length)
+                ];
+            const lastName =
+                fashionLastNames[
+                    Math.floor(Math.random() * fashionLastNames.length)
+                ];
+            name = `${firstName} ${lastName}`;
+        } else if (nameFormat < 0.9) {
+            // Mononym with title (20% chance)
+            const firstName =
+                fashionFirstNames[
+                    Math.floor(Math.random() * fashionFirstNames.length)
+                ];
+            const title =
+                fashionTitles[Math.floor(Math.random() * fashionTitles.length)];
+            name = `${firstName} ${title}`;
+        } else {
+            // Full high-fashion name (10% chance)
+            const firstName =
+                fashionFirstNames[
+                    Math.floor(Math.random() * fashionFirstNames.length)
+                ];
+            const lastName =
+                fashionLastNames[
+                    Math.floor(Math.random() * fashionLastNames.length)
+                ];
+            const title =
+                fashionTitles[Math.floor(Math.random() * fashionTitles.length)];
+            name = `${firstName} ${lastName} ${title}`;
+        }
+
+        return name;
+    }
+
     function handleClassSelection(classId) {
         selectedClassId = classId;
         const classObject = characterClasses.find((c) => c.id === classId);
-        updateCharacterClass(classId, classObject);
+        // updateCharacterClass(classId, classObject);
+        updateCharacter({ class: classObject });
     }
 
     function handleNameChange(event) {
@@ -57,21 +177,14 @@
         // Debug log
         console.log("Creating character with class:", selectedClass);
 
-        const character = characterClasses[selectedClassId];
+        $characterStore.classId = characterClasses[selectedClassId];
+        $characterStore.skills = selectedClass.startingSkills;
 
         try {
-            // In a real app, you might save to a server here
-            const response = await fetch("/api/characters", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify($characterStore),
-            });
-            const data = await response.json();
-
+            $characterStore.saveToServer();
             // For now, we'll just navigate to the game
         } catch (error) {
-            console.error("Error creating character:", error);
-            // alert("Failed to create character. Please try again.");
+            console.error("Error saving character to server.");
             // todo
             goto("/game");
         }
@@ -88,9 +201,10 @@
             <input
                 id="character-name"
                 type="text"
-                bind:value={$characterStore.name}
                 placeholder="Enter name..."
+                bind:value={$characterStore.name}
                 oninput={handleNameChange}
+                onload={generateRandomName()}
             />
         </div>
 

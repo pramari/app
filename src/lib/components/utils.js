@@ -38,17 +38,6 @@ export function playerHasItem(inventory, itemId) {
   return inventory.some((item) => item.id === itemId);
 }
 
-// Check if a location is accessible from the current one
-export function isLocationAccessible(fromLocationId, toLocationId, mapData) {
-  return mapData.paths.some(
-    (path) =>
-      (path.from === fromLocationId && path.to === toLocationId) ||
-      (path.bidirectional &&
-        path.from === toLocationId &&
-        path.to === fromLocationId),
-  );
-}
-
 // Get available locations from current one
 export function getAvailableLocations(currentLocationId, mapData) {
   return mapData.paths

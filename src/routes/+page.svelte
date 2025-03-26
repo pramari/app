@@ -1,7 +1,17 @@
-<h1 class="text-3xl font-bold underline">Welcome to SvelteKit</h1>
+<script>
+    import { goto } from "$app/navigation";
+    function gotoCreateCharacter() {
+        goto("/characterhome");
+    }
+</script>
+
 <p>
-    Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the
-    documentation
+    <button
+        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        onclick={gotoCreateCharacter}
+    >
+        Create a new character
+    </button>
 </p>
 
 <!-- component

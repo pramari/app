@@ -1,6 +1,7 @@
 // $lib/stores/character.js
-import { writable } from "svelte/store";
+import { writable, get } from "svelte/store";
 import type { Writable } from "svelte/store";
+import { browser } from "$app/environment";
 
 // Define the Character type
 interface Character {
@@ -8,7 +9,11 @@ interface Character {
   name: string;
   level: number;
   class: string;
+  classId?: string;
+  className?: string;
   experience: number;
+  skills: Record<string, number>;
+  abilities: string[];
   body: {
     measurements: string;
     cup: string;
@@ -17,17 +22,16 @@ interface Character {
     weight: number;
     bodytype: string;
     eyecolor: string;
-    Haircolor: string;
+    haircolor: string;
     pubichair: string;
     piercings: string;
     tattoos: string;
   };
   attributes: {
     strength: number;
-    dexterity: number;
     constitution: number;
+    agility: number; // agility
     intelligence: number;
-    wisdom: number;
     charisma: number;
   };
   hitPoints: {
@@ -40,8 +44,6 @@ interface Character {
     quantity: number;
     description?: string;
   }>;
-  skills: Record<string, number>;
-  abilities: string[];
   // Actor-specific attributes
   performanceSkills: {
     acting: number;
@@ -62,31 +64,92 @@ interface Character {
   }>;
   specialTalents: string[];
   biography: string;
-  classId?: string;
-  className?: string;
   stats?: Record<string, number>;
   skillPoints?: number;
 }
 
 // Initial state
-export const initialCharacter: Character = {
+const initialCharacter: Character = {
+  id: "",
   name: "",
+  level: 1,
   class: null,
   classId: null,
-  className: null,
-  body: {
-    height: 162,
-  },
-  skills: {},
-  stats: {},
-  skillPoints: 3,
-  level: 1,
+  className: "",
   experience: 0,
+  skills: [], // Record<string, number>;
   abilities: [],
+  body: {
+    measurements: "",
+    cup: "",
+    boobs: "",
+    height: 160,
+    weight: 50,
+    bodytype: "string",
+    eyecolor: "string",
+    haircolor: "string",
+    pubichair: "string",
+    piercings: "string",
+    tattoos: "string",
+  },
+  attributes: {
+    strength: 0,
+    constitution: 0,
+    agility: 0, // agility
+    intelligence: 0,
+    charisma: 0,
+  },
+  hitPoints: {
+    current: 1,
+    max: 1,
+  },
+  inventory: [
+    { id: "money", name: "money", quantity: 100, description: "currency" },
+  ],
+  // Actor-specific attributes
+  performanceSkills: {
+    acting: 0,
+    gonzo: 0,
+  },
+  careerAttributes: {
+    fame: 0,
+    fanbase: 0,
+    connections: 0,
+    reputation: 0,
+  },
+  roles: [
+    {
+      title: "",
+      character: "",
+      production: "",
+      year: "",
+      rating: "",
+    },
+  ],
+  specialTalents: [],
+  biography: "",
+  stats: { scenes: 0 },
+  skillPoints: 0,
 };
 
+// Get character from localStorage if available
+const storedCharacter =
+  browser && localStorage.getItem("character")
+    ? JSON.parse(localStorage.getItem("character")!)
+    : initialCharacter;
+
 // Create the store
-const characterStore: Writable<Character> = writable(initialCharacter);
+const characterStore: Writable<Character> = writable({
+  ...initialCharacter,
+  ...storedCharacter,
+});
+
+// Subscribe to changes and persist to localStorage
+if (browser) {
+  characterStore.subscribe((character) => {
+    localStorage.setItem("character", JSON.stringify(character));
+  });
+}
 
 // Helper function to update character
 function updateCharacter(updates: Partial<Character>): void {
@@ -96,7 +159,7 @@ function updateCharacter(updates: Partial<Character>): void {
   }));
 }
 
-// Optional: Function to load character from server
+// Function to load character from server
 async function loadCharacterFromServer(characterId: string): Promise<void> {
   try {
     const response = await fetch(`/api/characters/${characterId}`);
@@ -105,12 +168,10 @@ async function loadCharacterFromServer(characterId: string): Promise<void> {
     characterStore.set(data);
   } catch (error) {
     console.error("Error loading character:", error);
-    // Fallback to initial character if loading fails
-    characterStore.set(initialCharacter);
   }
 }
 
-// Helper functions for common operations
+/* // Helper functions for common operations
 export const updateCharacterName = (name) => {
   character.update((char) => ({
     ...char,
@@ -125,11 +186,11 @@ export const updateCharacterClass = (classId, classObject) => {
     class: classObject,
   }));
 };
-
+ */
 // Export the store and methods
 export {
   characterStore,
   updateCharacter,
-  loadCharacterFromServer,
+  // loadCharacterFromServer,
   type Character,
 };

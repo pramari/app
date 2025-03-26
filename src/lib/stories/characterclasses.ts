@@ -1,42 +1,5 @@
 export const characterClasses = [
   {
-    id: "Housewife",
-    name: "Housewife",
-    portrait: "/images/classes/housewife.jpg",
-    level: 1,
-    class: "string",
-    race: "string",
-    attributes: {
-      strength: 1,
-      dexterity: 1,
-      constitution: 1,
-      intelligence: 1,
-      wisdom: 1,
-      charisma: 1,
-    },
-    experience: 0,
-    hitPoints: {
-      current: 10,
-      max: 10,
-    },
-    inventory: [
-      {
-        id: "thong",
-        name: "thong",
-        quantity: "1",
-        description: "A black thong",
-      },
-    ],
-    skills: "", // Record<string, number>;
-    abilities: ["string"],
-    startingSkills: {
-      combat: 1,
-      strength: 1,
-      defense: 1,
-      persuasion: 1,
-    },
-  },
-  {
     id: "warrior",
     name: "Warrior",
     description: "Strong and durable fighters who excel in combat.",
@@ -119,6 +82,44 @@ export const characterClasses = [
         unlockLevel: 5,
       },
     ],
+  },
+  {
+    id: "Housewife",
+    name: "Housewife",
+    className: "Housewife",
+    portrait: "/images/classes/housewife.jpg",
+    level: 1,
+    class: "string",
+    race: "string",
+    attributes: {
+      strength: 1,
+      dexterity: 1,
+      constitution: 1,
+      intelligence: 1,
+      wisdom: 1,
+      charisma: 1,
+    },
+    experience: 0,
+    hitPoints: {
+      current: 10,
+      max: 10,
+    },
+    inventory: [
+      {
+        id: "thong",
+        name: "thong",
+        quantity: "1",
+        description: "A black thong",
+      },
+    ],
+    skills: "", // Record<string, number>;
+    abilities: ["string"],
+    startingSkills: {
+      combat: 1,
+      strength: 1,
+      defense: 1,
+      persuasion: 1,
+    },
   },
   {
     id: "rogue",

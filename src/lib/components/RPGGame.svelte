@@ -2,7 +2,6 @@
 <script>
     import { characterStore } from "$lib/stores/character";
     import Character from "./Character.svelte";
-    import MapView from "./MapView.svelte";
     import RasterMapView from "./RasterMapView.svelte";
     import Interaction from "./Interaction.svelte";
     import StoryEngine from "./StoryEngine.svelte";
@@ -11,22 +10,26 @@
         getClassById,
     } from "$lib/stories/characterClasses.ts";
     import { getSkillInfo } from "$lib/stories/skills.ts";
-    import {
-        getScene,
-        getSceneForLocation,
-    } from "$lib/components/stories/utils.js";
+    import { getScene, getSceneForLocation } from "$lib/components/utils.js";
     import { onMount } from "svelte";
 
     // Import the story
-    import { gameStory } from "$lib/components/stories/mainStory.js";
+    import { gameStory } from "$lib/stories/mainStory.js";
 
-    let player = null;
     let playerMapPosition = { x: 200, y: 150 }; // Default position on raster map
     let gameStarted = false;
     let currentScene = null;
     let currentLocation = null;
     let activeInteraction = null;
     let showingMap = false;
+
+    currentScene = gameStory.scenes[gameStory.startingScene];
+    currentLocation = gameStory.map.locations[gameStory.startingLocation];
+
+    // Initialize player position on the map
+    if (gameStory.map.rasterMap && gameStory.map.rasterMap.startingPosition) {
+        playerMapPosition = { ...gameStory.map.rasterMap.startingPosition };
+    }
 
     // Initialize player position from the story data
     $: if (gameStory.map.rasterMap && !gameStarted) {
@@ -42,28 +45,6 @@
         completedQuests: [],
         discoveredLocations: [],
     };
-
-    function startGame(characterData) {
-        player = {
-            ...characterData,
-            inventory: [],
-        };
-        gameStarted = true;
-        currentScene = gameStory.scenes[gameStory.startingScene];
-        currentLocation = gameStory.map.locations[gameStory.startingLocation];
-
-        // Initialize player position on the map
-        if (
-            gameStory.map.rasterMap &&
-            gameStory.map.rasterMap.startingPosition
-        ) {
-            playerMapPosition = { ...gameStory.map.rasterMap.startingPosition };
-        }
-
-        console.log("Game started with:", player);
-        console.log("Current location:", currentLocation);
-        console.log("Current scene:", currentScene);
-    }
 
     function makeChoice(choice) {
         console.log("Player chose:", choice);
@@ -251,43 +232,55 @@
     }
 
     function improveSkill(skillId, amount) {
-        if (!player.skills[skillId]) {
-            player.skills[skillId] = 0;
+        if (!$characterStore.skills[skillId]) {
+            let skill = getSkillInfo(skillId);
+            $characterStore.updateCharacter({ skill: 0 });
         }
-        player.skills[skillId] += amount;
-        player = { ...player }; // Trigger reactivity
+        let skill = getSkillInfo(skillId);
+        $characterStore.updateCharacter({
+            skill: $characterStore.skills[skillId] + amount,
+        });
+        // player.skills[skillId] += amount;
+        // player = { ...player }; // Trigger reactivity
     }
 
     function gainExperience(amount) {
-        player.experience += amount;
+        $characterStore.experience += amount;
 
         // Level up if enough experience
-        if (player.experience >= player.level * 100) {
-            player.level++;
+        if ($characterStore.experience >= $characterStore.level * 100) {
+            $characterStore.level++;
             // Give skill points on level up
-            player.skillPoints = (player.skillPoints || 0) + 3;
+            $characterStore.skillPoints =
+                ($characterStore.skillPoints || 0) + 3;
 
             // Check for new abilities
-            const characterClass = getClassById(player.class);
+            const characterClass = getClassById($characterStore.class);
             if (characterClass) {
                 const newAbilities = characterClass.abilities
-                    .filter((ability) => ability.unlockLevel === player.level)
+                    .filter(
+                        (ability) =>
+                            ability.unlockLevel === $characterStore.level,
+                    )
                     .map((ability) => ability.id);
 
                 if (newAbilities.length > 0) {
-                    player.abilities = [...player.abilities, ...newAbilities];
+                    $characterStore.abilities = [
+                        ...$characterStore.abilities,
+                        ...newAbilities,
+                    ];
                 }
             }
         }
 
-        player = { ...player }; // Trigger reactivity
+        // player = { ...player }; // Trigger reactivity
     }
 
     function spendSkillPoint(skillId) {
-        if ((player.skillPoints || 0) > 0) {
+        if (($characterStore.skillPoints || 0) > 0) {
             improveSkill(skillId, 1);
-            player.skillPoints--;
-            player = { ...player };
+            $characterStore.skillPoints--;
+            // player = { ...player };
         }
     }
 
@@ -305,7 +298,7 @@
 <div class="rpg-game">
     <div class="game-container">
         <div class="character-panel">
-            <Character {player} {spendSkillPoint} />
+            <Character {spendSkillPoint} />
             <!-- Add a button to open the map -->
             <div class="map-button-container">
                 <button
@@ -348,15 +341,14 @@
                 <StoryEngine
                     scene={currentScene}
                     {makeChoice}
-                    {player}
                     onInteract={startInteraction}
                 />
             {:else}
                 <div class="error-scene">
                     <h2>Scene Error</h2>
                     <p>
-                        The current scene could not be loaded. This might be a
-                        bug in the game.
+                        The current scene {currentScene} could not be loaded. This
+                        might be a bug in the game.
                     </p>
                     <button
                         on:click={() => {
