@@ -82,6 +82,13 @@ export const gameStory = {
         y: 300,
         icon: "🧙‍♀️",
       },
+      agency_euro: {
+        name: "Model Agency",
+        description: "",
+        x: 100,
+        y: 100,
+        icon; "👗"
+      }
     },
 
     // Define paths between locations
