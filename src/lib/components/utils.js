@@ -1,5 +1,5 @@
 // src/lib/utils/gameUtils.js
-import { gameStory } from "$lib/components/stories/mainStory.js";
+import { gameStory } from "$lib/stories/mainStory.js";
 
 // Get a scene by ID
 export function getScene(sceneId) {

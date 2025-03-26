@@ -9,8 +9,8 @@
     import {
         characterClasses,
         getClassById,
-    } from "$lib/components/stories/classes.ts";
-    import { getSkillInfo } from "$lib/components/stories/skills.js";
+    } from "$lib/stories/characterClasses.ts";
+    import { getSkillInfo } from "$lib/stories/skills.ts";
     import {
         getScene,
         getSceneForLocation,

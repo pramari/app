@@ -8,7 +8,20 @@ interface Character {
   name: string;
   level: number;
   class: string;
-  race: string;
+  experience: number;
+  body: {
+    measurements: string;
+    cup: string;
+    boobs: string;
+    height: number;
+    weight: number;
+    bodytype: string;
+    eyecolor: string;
+    Haircolor: string;
+    pubichair: string;
+    piercings: string;
+    tattoos: string;
+  };
   attributes: {
     strength: number;
     dexterity: number;
@@ -17,7 +30,6 @@ interface Character {
     wisdom: number;
     charisma: number;
   };
-  experience: number;
   hitPoints: {
     current: number;
     max: number;
@@ -30,6 +42,30 @@ interface Character {
   }>;
   skills: Record<string, number>;
   abilities: string[];
+  // Actor-specific attributes
+  performanceSkills: {
+    acting: number;
+    gonzo: number;
+  };
+  careerAttributes: {
+    fame: number;
+    fanbase: number;
+    connections: string[];
+    reputation: number;
+  };
+  roles: Array<{
+    title: string;
+    character: string;
+    production: string;
+    year: number;
+    rating: number;
+  }>;
+  specialTalents: string[];
+  biography: string;
+  classId?: string;
+  className?: string;
+  stats?: Record<string, number>;
+  skillPoints?: number;
 }
 
 // Initial state
@@ -38,6 +74,9 @@ export const initialCharacter: Character = {
   class: null,
   classId: null,
   className: null,
+  body: {
+    height: 162,
+  },
   skills: {},
   stats: {},
   skillPoints: 3,

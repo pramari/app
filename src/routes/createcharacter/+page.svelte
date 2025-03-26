@@ -2,18 +2,19 @@
 <script>
     import { onMount } from "svelte";
 
-    import { characterClasses } from "$lib/components/stories/classes.ts";
     import {
         skills,
         skillCategories,
         getSkillInfo,
-    } from "$lib/components/stories/skills.js";
+    } from "$lib/stories/skills.ts";
+
     import {
         characterStore,
         updateCharacter,
         updateCharacterName,
         updateCharacterClass,
     } from "$lib/stores/character.ts";
+    import { characterClasses } from "$lib/stories/characterClasses.ts";
 
     import { goto } from "$app/navigation";
 
@@ -21,8 +22,8 @@
 
     onMount(() => {});
 
-    let selectedClassId = characterClasses[0].id;
-    $: selectedClass = characterClasses.find((c) => c.id === selectedClassId);
+    let selectedClassId = characterClasses[0].id; // select first class by default
+    $: selectedClass = characterClasses.find((c) => c.id === selectedClassId); // get selected class object
 
     function handleClassSelection(classId) {
         selectedClassId = classId;
@@ -31,7 +32,13 @@
     }
 
     function handleNameChange(event) {
+        // store name in store
         updateCharacter({ name: event.target.value });
+    }
+
+    function handleBodyChange(event) {
+        // store name in store
+        updateCharacter({ body: { height: event.target.value } });
     }
 
     async function createCharacter() {
@@ -73,17 +80,30 @@
 </script>
 
 <div class="character-creation">
-    <h1>Create Your Character</h1>
+    <div class="character-details">
+        <h1>Create Your Character</h1>
 
-    <div class="name-input">
-        <label for="character-name">Character Name:</label>
-        <input
-            id="character-name"
-            type="text"
-            bind:value={$characterStore.name}
-            placeholder="Enter name..."
-            oninput={handleNameChange}
-        />
+        <div class="name-input">
+            <label for="character-name">Character Name:</label>
+            <input
+                id="character-name"
+                type="text"
+                bind:value={$characterStore.name}
+                placeholder="Enter name..."
+                oninput={handleNameChange}
+            />
+        </div>
+
+        <div class="body-input">
+            <label for="character-body">Character Body:</label>
+            <input
+                id="character-body-height"
+                type="text"
+                bind:value={$characterStore.body.height}
+                placeholder="Enter body..."
+                oninput={handleBodyChange}
+            />
+        </div>
     </div>
 
     <div class="class-selection">
@@ -136,8 +156,13 @@
 
 <style>
     .character-creation {
+        display: grid;
         max-width: 800px;
         margin: 0 auto;
+    }
+    .character-details {
+        display: grid;
+        margin-bottom: 20px;
     }
 
     .name-input {
