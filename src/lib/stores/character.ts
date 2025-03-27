@@ -162,7 +162,9 @@ function updateCharacter(updates: Partial<Character>): void {
 // Function to load character from server
 async function loadCharacterFromServer(characterId: string): Promise<void> {
   try {
-    const response = await fetch(`/api/characters/${characterId}`);
+    const response = await fetch(
+      `https://pramari.de/rpg/api/data/${characterId}`,
+    );
     if (!response.ok) throw new Error("Failed to fetch character");
     const data: Character = await response.json();
     characterStore.set(data);

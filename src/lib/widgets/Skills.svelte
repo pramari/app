@@ -25,6 +25,7 @@
 </script>
 
 <div class="section-content">
+    Skills: {$characterStore.skillPoints || 0} skill points available
     {#each Object.entries(groupedSkills) as [category, categorySkills]}
         <div class="skill-category">
             <h4>{skillCategories[category]?.name || category}</h4>

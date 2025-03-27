@@ -19,3 +19,20 @@
         </ul>
     {/if}
 </div>
+
+<style>
+    .inventory-list {
+        list-style-type: none;
+        padding-left: 0;
+    }
+
+    .inventory-list li {
+        padding: 5px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .item-description {
+        font-size: 0.9em;
+        color: #666;
+    }
+</style>

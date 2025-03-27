@@ -1,5 +1,5 @@
 import { SvelteKitAuth } from "@auth/sveltekit";
-import Google from "@auth/core/providers/google";
+// import Google from "@auth/core/providers/google";
 // import { OIDC } from "@auth/core/providers/oidc";
 // import { OAuthConfig } from "@auth/core/providers";
 // import { OAuth } from "@auth/core/providers/oauth";

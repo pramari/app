@@ -5,6 +5,8 @@
     import Stats from "$lib/widgets/Stats.svelte";
     import Skills from "$lib/widgets/Skills.svelte";
     import Inventory from "$lib/widgets/Inventory.svelte";
+    import Abilitites from "$lib/widgets/Abilitites.svelte";
+    import Body from "$lib/widgets/Body.svelte";
 
     export let spendSkillPoint;
 
@@ -39,6 +41,18 @@
         </div>
     </div>
 
+    <!-- Body Section -->
+    <a class="section-header" onclick={() => toggleSection("body")}>
+        <h3>Physical Attributes</h3>
+        <span class="toggle-icon"
+            >{expandedSection === "body" ? "▼" : "▶"}</span
+        >
+    </a>
+
+    {#if expandedSection === "body" && $characterStore.body}
+        <Body />
+    {/if}
+
     <div class="stats-section">
         <button class="section-header" onclick={() => toggleSection("stats")}>
             <h3>Character Stats</h3>
@@ -63,7 +77,9 @@
         >
     </a>
 
-    {#if expandedSection === "skills"}{/if}
+    {#if expandedSection === "skills"}
+        <Skills />
+    {/if}
 
     <a class="section-header" onclick={() => toggleSection("abilities")}>
         <h3>Abilities</h3>
@@ -73,31 +89,13 @@
     </a>
 
     {#if expandedSection === "abilities" && $characterStore.abilities}
-        <div class="section-content">
-            <div class="abilities-list">
-                {#each $characterStore.abilities as abilityId}
-                    {@const ability = (
-                        ($characterStore.class &&
-                            characterClasses.find(
-                                (c) => c.id === $characterStore.class,
-                            )?.abilities) ||
-                        []
-                    ).find((a) => a.id === abilityId)}
-                    {#if ability}
-                        <div class="ability-item">
-                            <h4>{ability.name}</h4>
-                            <p>{ability.description}</p>
-                        </div>
-                    {/if}
-                {/each}
-            </div>
-        </div>
+        <Abilitites />
     {/if}
 
     <a class="section-header" onclick={() => toggleSection("inventory")}>
         <h3>Inventory</h3>
-        <span class="toggle-icon"
-            >{expandedSection === "inventory" ? "▼" : "▶"}</span
+        <button class="toggle-icon"
+            >{expandedSection === "inventory" ? "▼" : "▶"}</button
         >
     </a>
 
@@ -156,38 +154,5 @@
         padding: 10px;
         background-color: #f5f5f5;
         border-radius: 0 0 4px 4px;
-    }
-
-    .ability-item {
-        background: rgba(255, 255, 255, 0.5);
-        border-radius: 4px;
-        padding: 8px;
-        margin-bottom: 8px;
-    }
-
-    .ability-item h4 {
-        margin: 0 0 5px 0;
-        color: #444;
-    }
-
-    .ability-item p {
-        margin: 0;
-        font-size: 0.9em;
-        color: #666;
-    }
-
-    .inventory-list {
-        list-style-type: none;
-        padding-left: 0;
-    }
-
-    .inventory-list li {
-        padding: 5px 0;
-        border-bottom: 1px solid #eee;
-    }
-
-    .item-description {
-        font-size: 0.9em;
-        color: #666;
     }
 </style>

@@ -23,7 +23,7 @@ export const characterClasses = [
       "boots",
       "accessory",
     ],
-    abilities: [
+    startingAbilities: [
       {
         id: "power_strike",
         name: "Power Strike",
@@ -61,7 +61,7 @@ export const characterClasses = [
       alchemy: 1,
     },
     equipmentSlots: ["staff", "robe", "amulet", "ring", "boots", "accessory"],
-    abilities: [
+    startingAbilities: [
       {
         id: "fireball",
         name: "Fireball",
@@ -113,7 +113,7 @@ export const characterClasses = [
       },
     ],
     skills: "", // Record<string, number>;
-    abilities: ["string"],
+    startingAbilities: [{ daydrinking: "string" }],
     startingSkills: {
       combat: 1,
       strength: 1,
@@ -146,7 +146,7 @@ export const characterClasses = [
       "gloves",
       "accessory",
     ],
-    abilities: [
+    startingAbilities: [
       {
         id: "backstab",
         name: "Backstab",
@@ -173,9 +173,4 @@ export const characterClasses = [
 
 export function getClassById(classId) {
   return characterClasses.find((c) => c.id === classId) || null;
-}
-
-export function getStartingSkillsForClass(classId) {
-  const characterClass = getClassById(classId);
-  return characterClass ? characterClass.startingSkills : {};
 }

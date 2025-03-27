@@ -178,7 +178,13 @@
         console.log("Creating character with class:", selectedClass);
 
         $characterStore.classId = characterClasses[selectedClassId];
+        $characterStore.stats = selectedClass.startingStats;
         $characterStore.skills = selectedClass.startingSkills;
+        $characterStore.abilities = selectedClass.startingAbilities;
+
+        $characterStore.className = selectedClass.name;
+        $characterStore.classDescription = selectedClass.description;
+        $characterStore.classPortrait = selectedClass.portrait;
 
         try {
             $characterStore.saveToServer();
