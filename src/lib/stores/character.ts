@@ -24,8 +24,8 @@ interface Character {
     eyecolor: string;
     haircolor: string;
     pubichair: string;
-    piercings: string;
-    tattoos: string;
+    piercings: [];
+    tattoos: [];
   };
   attributes: {
     strength: number;
@@ -85,12 +85,12 @@ const initialCharacter: Character = {
     boobs: "",
     height: 160,
     weight: 50,
-    bodytype: "string",
-    eyecolor: "string",
-    haircolor: "string",
+    bodytype: "",
+    eyecolor: "",
+    haircolor: "",
     pubichair: "string",
-    piercings: "string",
-    tattoos: "string",
+    piercings: [],
+    tattoos: [],
   },
   attributes: {
     strength: 0,
@@ -173,22 +173,6 @@ async function loadCharacterFromServer(characterId: string): Promise<void> {
   }
 }
 
-/* // Helper functions for common operations
-export const updateCharacterName = (name) => {
-  character.update((char) => ({
-    ...char,
-    name,
-  }));
-};
-
-export const updateCharacterClass = (classId, classObject) => {
-  character.update((char) => ({
-    ...char,
-    classId,
-    class: classObject,
-  }));
-};
- */
 // Export the store and methods
 export {
   characterStore,

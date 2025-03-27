@@ -71,51 +71,6 @@
 </div>
 
 <style>
-    .character-sheet {
-        background-color: #f9f9f9;
-        border-radius: 8px;
-        padding: 15px;
-    }
-
-    h2 {
-        margin-top: 0;
-        border-bottom: 2px solid #ddd;
-        padding-bottom: 8px;
-    }
-
-    .xp-bar {
-        height: 10px;
-        background-color: #ddd;
-        border-radius: 5px;
-        margin: 5px 0;
-        overflow: hidden;
-    }
-
-    .xp-fill {
-        height: 100%;
-        background-color: #4a6;
-    }
-
-    .xp-text {
-        font-size: 12px;
-        color: #666;
-    }
-
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        cursor: pointer;
-        padding: 5px;
-        margin-top: 15px;
-        background-color: #e9e9e9;
-        border-radius: 4px;
-    }
-
-    .section-header h3 {
-        margin: 0;
-    }
-
     .section-content {
         padding: 10px;
         background-color: #f5f5f5;
@@ -143,16 +98,6 @@
 
     .attribute-value {
         flex-grow: 1;
-    }
-
-    /* Styles for Biography section */
-    .biography {
-        line-height: 1.6;
-    }
-
-    .empty-bio {
-        font-style: italic;
-        color: #888;
     }
 
     @media (max-width: 600px) {

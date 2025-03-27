@@ -9,6 +9,7 @@ export const characterClasses = [
       stamina: 80,
       mana: 20,
     },
+    skillPoints: 3,
     startingSkills: {
       combat: 3,
       strength: 3,
@@ -54,6 +55,7 @@ export const characterClasses = [
       stamina: 50,
       mana: 120,
     },
+    skillPoints: 3,
     startingSkills: {
       magic: 3,
       intelligence: 3,
@@ -87,6 +89,8 @@ export const characterClasses = [
     id: "Housewife",
     name: "Housewife",
     className: "Housewife",
+    description:
+      "Enthusiastic performers who inspire allies with their acrobatics and spirited routines.",
     portrait: "/images/classes/housewife.jpg",
     level: 1,
     class: "string",
@@ -114,6 +118,67 @@ export const characterClasses = [
     ],
     skills: "", // Record<string, number>;
     startingAbilities: [{ daydrinking: "string" }],
+    startingSkills: {
+      combat: 1,
+      strength: 1,
+      defense: 1,
+      persuasion: 1,
+    },
+  },
+  {
+    id: "Cheerleader",
+    name: "Cheerleader",
+    className: "cheerleader",
+    description:
+      "Enthusiastic performers who inspire allies with their acrobatics and spirited routines.",
+    portrait: "/images/classes/cheerleader.jpg",
+    level: 1,
+    class: "string",
+    race: "string",
+    attributes: {
+      strength: 1,
+      dexterity: 1,
+      constitution: 1,
+      intelligence: 1,
+      wisdom: 1,
+      charisma: 1,
+    },
+    experience: 0,
+    hitPoints: {
+      current: 10,
+      max: 10,
+    },
+    inventory: [
+      {
+        id: "thong",
+        name: "thong",
+        quantity: "1",
+        description: "A black thong",
+      },
+    ],
+    startingAbilities: [
+      {
+        id: "rally_cheer",
+        name: "Rally Cheer",
+        description:
+          "A spirited cheer that boosts allies' morale and performance.",
+        unlockLevel: 1,
+      },
+      {
+        id: "acrobatic_stunt",
+        name: "Acrobatic Stunt",
+        description:
+          "Perform an impressive gymnastic feat that dazzles spectators.",
+        unlockLevel: 3,
+      },
+      {
+        id: "team_spirit",
+        name: "Team Spirit",
+        description:
+          "Passive ability that increases the effectiveness of group activities.",
+        unlockLevel: 5,
+      },
+    ],
     startingSkills: {
       combat: 1,
       strength: 1,
