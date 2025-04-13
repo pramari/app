@@ -1,6 +1,7 @@
 <!-- src/routes/protected/+page.svelte -->
 <script lang="ts">
     import type { PageData } from "./$types";
+    import { page } from "$app/stores";
 
     export let data: PageData;
 </script>
@@ -14,5 +15,5 @@
     {#if data.user.image}
         <img src={data.user.img} alt="{data.user.first_name} Profile" />
     {/if}
-    {JSON.stringify(data.user, null, 2)}
+    {JSON.stringify($page.data.session.user?.image, null, 2)}
 {/if}
