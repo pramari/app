@@ -1,5 +1,5 @@
 import { SvelteKitAuth } from "@auth/sveltekit";
-// import Google from "@auth/core/providers/google";
+import Google from "@auth/core/providers/google";
 // import { OIDC } from "@auth/core/providers/oidc";
 // import { OAuthConfig } from "@auth/core/providers";
 // import { OAuth } from "@auth/core/providers/oauth";
@@ -8,6 +8,8 @@ import type { OAuthConfig, OAuthUserConfig } from "@auth/core/providers";
 import type { Provider } from "@auth/core/providers";
 import type { Session, User } from "@auth/core/types";
 import {
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
   PRAMARI_CLIENT_ID,
   PRAMARI_CLIENT_SECRET,
   OIDC_ISSUER,
@@ -30,11 +32,12 @@ interface OIDCProviderConfig extends OAuthUserConfig<any> {
 // Define OIDC provider function
 function OIDCProvider(options: OIDCProviderConfig): OAuthConfig<any> {
   return {
-    id: "oidc",
+    id: "pramari.de",
     name: "pramari",
     type: "oauth",
     wellKnown: `${options.issuer}/o/.well-known/openid-configuration`,
     authorization: { params: { scope: "openid email userinfo" } },
+    issuer: "https://pramari.de/o",
     idToken: true,
     checks: ["pkce", "state"],
     userinfo: async (token) => {
@@ -57,7 +60,7 @@ function OIDCProvider(options: OIDCProviderConfig): OAuthConfig<any> {
       };
     },
     style: {
-      // logo: "/company-logo.png",
+      logo: "https://pramari.de/logo.png",
       // logoDark: "/company-logo-dark.png",
       bg: "#0F172A",
       text: "#FFFFFF",
@@ -67,13 +70,14 @@ function OIDCProvider(options: OIDCProviderConfig): OAuthConfig<any> {
 }
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
+  secret: AUTH_SECRET,
+  trustHost: true,
   providers: [
-    /*
     Google({
       clientId: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
+      authorization: { params: { scope: "openid email" } },
     }) as Provider,
-    */
     // Generic OIDC provider
     OIDCProvider({
       clientId: PRAMARI_CLIENT_ID,
@@ -82,8 +86,6 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
     }) as Provider,
     // Add other providers here
   ],
-  secret: AUTH_SECRET,
-  trustHost: true,
   callbacks: {
     async session({ session, token }): Promise<CustomSession> {
       // Add additional user info to the session if needed

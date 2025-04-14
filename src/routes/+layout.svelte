@@ -34,7 +34,7 @@
         <!-- Desktop Navigation -->
         <div class="hidden md:flex items-center space-x-4">
             <a href="/" class="hover:text-gray-300">Home</a>
-            <a href="/protected" class="hover:text-gray-300">Features</a>
+            <a href="/app" class="hover:text-gray-300">Features</a>
 
             {#if $page.data.session}
                 <a href="/profile" class="flex items-center space-x-2">
