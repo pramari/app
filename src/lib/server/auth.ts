@@ -21,6 +21,10 @@ import Resend from "@auth/core/providers/resend";
 interface CustomSession extends Session {
   // Add any additional properties you need
   accessToken?: string;
+  first_name?: string;
+  last_name?: string;
+  permissions?: string[];
+  services?: string[];
 }
 
 // Define the interface for OIDC provider options
@@ -57,6 +61,7 @@ function OIDCProvider(options: OIDCProviderConfig): OAuthConfig<any> {
         email: profile.email,
         image: profile.image,
         permissions: profile.permissions,
+        services: profile.services,
       };
     },
     style: {
