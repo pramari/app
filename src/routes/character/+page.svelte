@@ -18,7 +18,9 @@
     let bodyForm = {
         height: $characterStore.body?.height || 160,
         weight: $characterStore.body?.weight || 50,
-        measurements: $characterStore.body?.measurements || "",
+        bust: $characterStore.body?.bust || 90,
+        waist: $characterStore.body?.waist || 60,
+        hips: $characterStore.body?.hips || 90,
         cup: $characterStore.body?.cup || "",
         bodytype: $characterStore.body?.bodytype || "",
         eyecolor: $characterStore.body?.eyecolor || "",
@@ -129,6 +131,7 @@
 
     // Custom piercing/tattoo inputs
     let customPiercing = "";
+    let customPiercingDescription = "";
     let customTattoo = "";
     let customTattooDescription = "";
 
@@ -331,12 +334,25 @@
     }
 
     function addCustomPiercing() {
-        if (customPiercing && !bodyForm.piercings.includes(customPiercing)) {
-            bodyForm.piercings = [...bodyForm.piercings, customPiercing];
-            bodyForm = { ...bodyForm }; // Trigger reactivity
-            customPiercing = "";
-            updateBodyAttributes();
+        if (customPiercing) {
+            const piercingEntry = customPiercingDescription
+                ? `${customPiercing} (${customPiercingDescription})`
+                : customPiercing;
+
+            if (!bodyForm.piercings.includes(piercingEntry)) {
+                bodyForm.piercings = [...bodyForm.piercings, piercingEntry];
+                bodyForm = { ...bodyForm }; // Trigger reactivity
+                customPiercing = "";
+                customPiercingDescription = "";
+                updateBodyAttributes();
+            }
         }
+    }
+
+    function removePiercing(index) {
+        bodyForm.piercings = bodyForm.piercings.filter((_, i) => i !== index);
+        bodyForm = { ...bodyForm }; // Trigger reactivity
+        updateBodyAttributes();
     }
 
     function addCustomTattoo() {
@@ -419,7 +435,9 @@
             bodyForm = {
                 height: 160,
                 weight: 50,
-                measurements: "",
+                bust: 90,
+                waist: 60,
+                hips: 90,
                 cup: "",
                 bodytype: "",
                 eyecolor: "",
@@ -438,14 +456,16 @@
                 body: {
                     height: 160,
                     weight: 50,
-                    measurements: "",
+                    bust: 90,
+                    waist: 60,
+                    hips: 90,
                     cup: "",
                     bodytype: "",
                     eyecolor: "",
                     haircolor: "",
                     pubichair: "",
-                    piercings: "",
-                    tattoos: "",
+                    piercings: [],
+                    tattoos: [],
                 },
                 biography: "",
                 classId: null,
@@ -519,13 +539,36 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="measurements">Measurements:</label>
+                    <label for="bust">Bust:</label>
                     <input
-                        id="measurements"
-                        type="text"
-                        bind:value={bodyForm.measurements}
+                        id="bust"
+                        type="number"
+                        bind:value={bodyForm.bust}
                         oninput={updateBodyAttributes}
-                        placeholder="e.g. 90-60-90"
+                        min="60"
+                        max="150"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="waist">Waist:</label>
+                    <input
+                        id="waist"
+                        type="number"
+                        bind:value={bodyForm.waist}
+                        oninput={updateBodyAttributes}
+                        min="40"
+                        max="120"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="hips">Hips:</label>
+                    <input
+                        id="hips"
+                        type="number"
+                        bind:value={bodyForm.hips}
+                        oninput={updateBodyAttributes}
+                        min="60"
+                        max="150"
                     />
                 </div>
 
@@ -602,37 +645,53 @@
                 <!-- Multiple-choice piercings -->
                 <div class="multi-select-section">
                     <h3>Piercings</h3>
-                    <div class="checkbox-grid">
-                        {#each piercingOptions as piercing}
-                            <label class="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    checked={bodyForm.piercings.includes(
-                                        piercing,
-                                    )}
-                                    onchange={() => togglePiercing(piercing)}
-                                />
-                                {piercing}
-                            </label>
-                        {/each}
-                    </div>
+                    <div class="tattoo-input">
+                        <div class="tattoo-location">
+                            <label for="piercing-location">Location:</label><br />
+                            <select id="piercing-location" bind:value={customPiercing}>
+                                <option value="">Select or type below</option>
+                                {#each piercingOptions as location}
+                                    <option value={location}>{location}</option>
+                                {/each}
+                            </select>
+                            <input
+                                type="text"
+                                bind:value={customPiercing}
+                                placeholder="Piercing location..."
+                            />
+                        </div>
 
-                    <div class="custom-input">
-                        <input
-                            type="text"
-                            bind:value={customPiercing}
-                            placeholder="Add custom piercing..."
-                        />
+                        <div class="tattoo-description">
+                            <label for="piercing-description">Description:</label><br />
+                            <input
+                                id="piercing-description"
+                                type="text"
+                                bind:value={customPiercingDescription}
+                                placeholder="Piercing description..."
+                            />
+                        </div>
+
                         <button
                             onclick={addCustomPiercing}
-                            disabled={!customPiercing}>Add</button
+                            disabled={!customPiercing}>Add Piercing</button
                         >
                     </div>
 
                     {#if bodyForm.piercings.length > 0}
-                        <div class="selected-items">
+                        <div class="selected-items tattoo-list">
                             <h4>Your piercings:</h4>
-                            <p>{bodyForm.piercings.join(", ")}</p>
+                            <ul>
+                                {#each bodyForm.piercings as piercing, i}
+                                    <li>
+                                        {piercing}
+                                        <button
+                                            class="remove-btn"
+                                            onclick={() => removePiercing(i)}
+                                        >×</button
+                                        >
+                                    </li>
+                                {/each}
+                            </ul>
                         </div>
                     {/if}
                 </div>

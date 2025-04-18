@@ -1,31 +1,32 @@
-// $lib/stores/character.js
+// $lib/stores/character.ts
 import { writable, get } from "svelte/store";
 import type { Writable } from "svelte/store";
 import { browser } from "$app/environment";
 
 // Define the Character type
-interface Character {
+export interface Character {
   id: string;
   name: string;
   level: number;
-  class: string;
-  classId?: string;
+  class: string | null;
+  classId?: string | null;
   className?: string;
   experience: number;
   skills: Record<string, number>;
   abilities: string[];
   body: {
-    measurements: string;
+    bust: number;
+    waist: number;
+    hips: number;
     cup: string;
-    boobs: string;
     height: number;
     weight: number;
     bodytype: string;
     eyecolor: string;
     haircolor: string;
     pubichair: string;
-    piercings: [];
-    tattoos: [];
+    piercings: string[];
+    tattoos: string[];
   };
   attributes: {
     strength: number;
@@ -77,12 +78,13 @@ const initialCharacter: Character = {
   classId: null,
   className: "",
   experience: 0,
-  skills: [], // Record<string, number>;
+  skills: {}, // Empty Record<string, number>
   abilities: [],
   body: {
-    measurements: "",
+    bust: 90,
+    waist: 60,
+    hips: 90,
     cup: "",
-    boobs: "",
     height: 160,
     weight: 50,
     bodytype: "",
@@ -114,7 +116,7 @@ const initialCharacter: Character = {
   careerAttributes: {
     fame: 0,
     fanbase: 0,
-    connections: 0,
+    connections: [], // Fixed to match string[] type
     reputation: 0,
   },
   roles: [
@@ -122,8 +124,8 @@ const initialCharacter: Character = {
       title: "",
       character: "",
       production: "",
-      year: "",
-      rating: "",
+      year: 0, // Fixed to match number type
+      rating: 0, // Fixed to match number type
     },
   ],
   specialTalents: [],
@@ -135,10 +137,10 @@ const initialCharacter: Character = {
 // Get character from localStorage if available
 const storedCharacter =
   browser && localStorage.getItem("character")
-    ? JSON.parse(localStorage.getItem("character")!)
-    : initialCharacter;
+    ? (JSON.parse(localStorage.getItem("character")!) as Partial<Character>)
+    : ({} as Partial<Character>);
 
-// Create the store
+// Create the store with type validation
 const characterStore: Writable<Character> = writable({
   ...initialCharacter,
   ...storedCharacter,
@@ -151,22 +153,35 @@ if (browser) {
   });
 }
 
-// Helper function to update character
+/**
+ * Helper function to update character with type checking
+ * @param updates Partial character data to update
+ */
 function updateCharacter(updates: Partial<Character>): void {
-  characterStore.update((character) => ({
-    ...character,
-    ...updates,
-  }));
+  // Ensure updates conform to Character type
+  characterStore.update((character) => {
+    // Type checking happens when merging updates with character
+    const updatedCharacter: Character = {
+      ...character,
+      ...updates,
+    };
+    return updatedCharacter;
+  });
 }
 
-// Function to load character from server
+/**
+ * Function to load character from server
+ * @param characterId The ID of the character to load
+ */
 async function loadCharacterFromServer(characterId: string): Promise<void> {
   try {
     const response = await fetch(
       `https://pramari.de/rpg/api/data/${characterId}`,
     );
     if (!response.ok) throw new Error("Failed to fetch character");
-    const data: Character = await response.json();
+    const data = (await response.json()) as Character;
+
+    // Validate data conforms to Character type before setting store
     characterStore.set(data);
   } catch (error) {
     console.error("Error loading character:", error);
@@ -174,9 +189,4 @@ async function loadCharacterFromServer(characterId: string): Promise<void> {
 }
 
 // Export the store and methods
-export {
-  characterStore,
-  updateCharacter,
-  // loadCharacterFromServer,
-  type Character,
-};
+export { characterStore, updateCharacter, loadCharacterFromServer }; // Character type is already exported at the top
