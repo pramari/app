@@ -183,66 +183,180 @@
         return false;
     }
 
+    // Helper function to draw a dot grid background
+    function drawDotGrid() {
+        // Set background color
+        ctx.fillStyle = "#f8f8f8";
+        ctx.fillRect(0, 0, mapWidth, mapHeight);
+        
+        // Set up the dot grid style
+        ctx.fillStyle = "#cccccc";
+        
+        // Define dot size and spacing
+        const dotSize = 1.5;
+        const spacing = 20;
+        
+        // Draw the grid of dots
+        for (let x = spacing; x < mapWidth; x += spacing) {
+            for (let y = spacing; y < mapHeight; y += spacing) {
+                ctx.beginPath();
+                ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+    
+    // Calculate viewport offset to keep player centered
+    let viewportOffsetX = 0;
+    let viewportOffsetY = 0;
+    
+    function updateViewportOffset() {
+        if (!canvasElement) return;
+        
+        // Get canvas dimensions
+        const viewportWidth = canvasElement.width;
+        const viewportHeight = canvasElement.height;
+        
+        // Calculate the offset needed to keep player centered in viewport
+        viewportOffsetX = playerPosition.x - viewportWidth/2;
+        viewportOffsetY = playerPosition.y - viewportHeight/2;
+        
+        // Clamp offset to map boundaries
+        viewportOffsetX = Math.max(0, Math.min(viewportOffsetX, mapWidth - viewportWidth));
+        viewportOffsetY = Math.max(0, Math.min(viewportOffsetY, mapHeight - viewportHeight));
+    }
+    
     function drawMap(mapImg) {
         if (!ctx) return;
 
-        // Clear canvas
-        ctx.clearRect(0, 0, mapWidth, mapHeight);
+        // Update viewport offset to follow player
+        updateViewportOffset();
+        
+        // Get viewport dimensions
+        const viewportWidth = canvasElement.width;
+        const viewportHeight = canvasElement.height;
+        
+        // Clear the entire canvas
+        ctx.clearRect(0, 0, viewportWidth, viewportHeight);
+        
+        // Save context state
+        ctx.save();
+        
+        // Translate context to create camera effect - center the view on player
+        ctx.translate(-viewportOffsetX, -viewportOffsetY);
+        
+        // Draw dot grid instead of map image
+        drawDotGrid();
 
-        // Draw the map image
-        ctx.drawImage(mapImg, 0, 0, mapWidth, mapHeight);
-
-        // Draw obstacles (for debugging)
-        if (window.DEBUG_MODE) {
-            ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
-            for (const obstacle of obstacles) {
-                if (obstacle.type === "rect") {
-                    ctx.fillRect(
-                        obstacle.x,
-                        obstacle.y,
-                        obstacle.width,
-                        obstacle.height,
-                    );
-                } else if (obstacle.type === "circle") {
-                    ctx.beginPath();
-                    ctx.arc(
-                        obstacle.x,
-                        obstacle.y,
-                        obstacle.radius,
-                        0,
-                        Math.PI * 2,
-                    );
-                    ctx.fill();
-                }
+        // Draw obstacles - always visible
+        ctx.fillStyle = "rgba(100, 70, 50, 0.5)"; // Brown color for obstacles
+        for (const obstacle of obstacles) {
+            if (obstacle.type === "rect") {
+                ctx.fillRect(
+                    obstacle.x,
+                    obstacle.y,
+                    obstacle.width,
+                    obstacle.height,
+                );
+                
+                // Add a subtle border
+                ctx.strokeStyle = "rgba(80, 50, 30, 0.8)";
+                ctx.lineWidth = 1;
+                ctx.strokeRect(
+                    obstacle.x,
+                    obstacle.y,
+                    obstacle.width,
+                    obstacle.height
+                );
+            } else if (obstacle.type === "circle") {
+                ctx.beginPath();
+                ctx.arc(
+                    obstacle.x,
+                    obstacle.y,
+                    obstacle.radius,
+                    0,
+                    Math.PI * 2,
+                );
+                ctx.fill();
+                
+                // Add a subtle border
+                ctx.strokeStyle = "rgba(80, 50, 30, 0.8)";
+                ctx.lineWidth = 1;
+                ctx.stroke();
             }
+        }
 
-            // Draw interactive areas (for debugging)
+        // Draw interactive areas (only in debug mode)
+        if (window.DEBUG_MODE) {
             ctx.fillStyle = "rgba(0, 255, 0, 0.3)";
             for (const area of interactiveAreas) {
                 if (area.type === "rect") {
                     ctx.fillRect(area.x, area.y, area.width, area.height);
                 } else if (area.type === "circle") {
                     ctx.beginPath();
-                    ctx.arc(area.x, area.y, area.radius, 0, Math.PI * 2);
+                    ctx.arc(area.x, area.y, area.radius || 30, 0, Math.PI * 2);
                     ctx.fill();
                 }
             }
         }
+        
+        // Draw location icons for interactive areas
+        for (const area of interactiveAreas) {
+            // Get coordinates
+            const x = area.x;
+            const y = area.y;
+            
+            // Draw icon background
+            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+            ctx.beginPath();
+            ctx.arc(x, y, 15, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw icon or letter
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "#333";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            
+            // Use area name initial if no icon specified
+            const icon = area.icon || area.name?.charAt(0) || "?";
+            ctx.fillText(icon, x, y);
+            
+            // Draw name below (only if player is nearby)
+            const distToPlayer = Math.sqrt(
+                Math.pow(playerPosition.x - x, 2) + 
+                Math.pow(playerPosition.y - y, 2)
+            );
+            
+            if (distToPlayer < 120) { // Only show names when close enough
+                ctx.font = "12px Arial";
+                ctx.fillStyle = "black";
+                ctx.fillText(area.name || area.id, x, y + 25);
+            }
+        }
 
-        // Draw player
+        // Restore context to reset translation before drawing player
+        ctx.restore();
+        
+        // Calculate player position in viewport
+        // Player should be drawn at the center of the viewport, unless at map edges
+        const playerViewportX = playerPosition.x - viewportOffsetX;
+        const playerViewportY = playerPosition.y - viewportOffsetY;
+        
+        // Draw player at viewport position
         if (typeof playerAvatar === "string" && playerAvatar.length <= 2) {
             // Draw emoji or character
             ctx.font = `${playerSize}px Arial`;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText(playerAvatar, playerPosition.x, playerPosition.y);
+            ctx.fillText(playerAvatar, playerViewportX, playerViewportY);
         } else {
             // Draw a circular avatar with color
             ctx.fillStyle = "blue";
             ctx.beginPath();
             ctx.arc(
-                playerPosition.x,
-                playerPosition.y,
+                playerViewportX,
+                playerViewportY,
                 playerSize / 2,
                 0,
                 Math.PI * 2,
@@ -253,21 +367,38 @@
             ctx.strokeStyle = "white";
             ctx.lineWidth = 2;
             ctx.stroke();
+            
+            // Draw a target circle around player for better visibility
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(
+                playerViewportX,
+                playerViewportY,
+                playerSize,
+                0,
+                Math.PI * 2
+            );
+            ctx.stroke();
         }
     }
 
     // Handle click on map
     function handleMapClick(event) {
         const rect = canvasElement.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
+        const viewportX = event.clientX - rect.left;
+        const viewportY = event.clientY - rect.top;
+        
+        // Convert viewport coordinates to map coordinates
+        const mapX = viewportX + viewportOffsetX;
+        const mapY = viewportY + viewportOffsetY;
 
-        // Dispatch click event with coordinates
-        dispatch("mapClicked", { x, y });
+        // Dispatch click event with map coordinates
+        dispatch("mapClicked", { x: mapX, y: mapY });
 
         // Check if clicked on an interactive area
         for (const area of interactiveAreas) {
-            if (isPlayerInArea(x, y, area)) {
+            if (isPlayerInArea(mapX, mapY, area)) {
                 dispatch("areaClicked", { areaId: area.id, area });
             }
         }

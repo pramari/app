@@ -9,18 +9,10 @@
     export let onAreaLeft = () => {};
     export let onAreaClicked = () => {};
 
-    // Debug mode toggle
-    let debugMode = false;
-
     onMount(() => {
-        // Set global DEBUG_MODE for the map
-        window.DEBUG_MODE = debugMode;
+        // Set global DEBUG_MODE to false
+        window.DEBUG_MODE = false;
     });
-
-    function toggleDebugMode() {
-        debugMode = !debugMode;
-        window.DEBUG_MODE = debugMode;
-    }
 
     function handlePlayerMoved(event) {
         playerPosition = event.detail.position;
@@ -49,23 +41,8 @@
     <div class="map-header">
         <h2>World Map</h2>
         <div class="map-controls">
-            <label class="debug-toggle">
-                <input
-                    type="checkbox"
-                    bind:checked={debugMode}
-                    on:change={toggleDebugMode}
-                />
-                Debug Mode
-            </label>
             <button class="close-button" on:click={onClose}>×</button>
         </div>
-    </div>
-
-    <div class="map-instructions">
-        <p>
-            Explore the world freely. Use arrow keys or WASD to move your
-            character.
-        </p>
     </div>
 
     <div class="map-container">
@@ -86,18 +63,7 @@
         />
     </div>
 
-    {#if debugMode}
-        <div class="debug-info">
-            <h3>Debug Information</h3>
-            <p>
-                Player position: X:{Math.round(playerPosition.x)}, Y:{Math.round(
-                    playerPosition.y,
-                )}
-            </p>
-            <p>Obstacles: {mapData.obstacles?.length || 0}</p>
-            <p>Interactive areas: {mapData.interactiveAreas?.length || 0}</p>
-        </div>
-    {/if}
+    <!-- Debug info removed -->
 </div>
 
 <style>
@@ -126,14 +92,6 @@
         gap: 15px;
     }
 
-    .debug-toggle {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 0.9em;
-        cursor: pointer;
-    }
-
     .close-button {
         background: none;
         border: none;
@@ -146,37 +104,9 @@
         color: #333;
     }
 
-    .map-instructions {
-        background-color: #fff3cd;
-        padding: 10px;
-        border-radius: 6px;
-        margin-bottom: 15px;
-    }
-
-    .map-instructions p {
-        margin: 0;
-        font-style: italic;
-    }
-
     .map-container {
         margin: 15px 0;
         display: flex;
         justify-content: center;
-    }
-
-    .debug-info {
-        background: #efefef;
-        padding: 10px;
-        border-radius: 6px;
-        margin-top: 15px;
-        font-family: monospace;
-        font-size: 0.9em;
-    }
-
-    .debug-info h3 {
-        margin-top: 0;
-        font-size: 1em;
-        border-bottom: 1px solid #ddd;
-        padding-bottom: 5px;
     }
 </style>

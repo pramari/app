@@ -25,7 +25,7 @@
     let currentScene = null;
     let currentLocation = null;
     let activeInteraction = null;
-    let showingMap = false;
+    let showingMap = true; // Start with map view by default
 
     currentScene = gameStory.scenes[gameStory.startingScene];
     currentLocation = gameStory.map.locations[gameStory.startingLocation];
@@ -171,9 +171,11 @@
         }
     }
 
-    // Function to close the map
+    // Function to close the map (now returns to the scene without hiding the map)
     function closeMap() {
-        showingMap = false;
+        // Map is always shown, but this function is still called by RasterMapView
+        // We'll just log that it was called for debugging purposes
+        console.log("closeMap called");
     }
 
     function travelToLocation(locationId) {
@@ -307,25 +309,12 @@
         <p>Playing as {$characterStore.name || 'Unnamed Character'}</p>
     </div>
     <div class="game-container">
-        <div class="character-panel">
-            <Character {spendSkillPoint} />
-            <!-- Add a button to open the map -->
-            <div class="map-button-container">
-                <button
-                    class="show-map-button"
-                    on:click={() => (showingMap = true)}
-                >
-                    Open World Map
-                </button>
-            </div>
-        </div>
-
-        <div class="story-panel">
+        <!-- Map View (top 2/3) -->
+        <div class="map-panel">
             {#if showingMap}
                 <RasterMapView
                     mapData={gameStory.map.rasterMap}
                     playerPosition={playerMapPosition}
-                    onClose={closeMap}
                     onAreaEntered={handleAreaEntered}
                     onAreaLeft={handleAreaLeft}
                 />
@@ -341,39 +330,50 @@
                         </button>
                     </div>
                 {/if}
-            {:else if activeInteraction}
-                <Interaction
-                    character={activeInteraction}
-                    player={$characterStore}
-                    onDialogueEnd={endInteraction}
-                />
-            {:else if currentScene}
-                <StoryEngine
-                    scene={currentScene}
-                    {makeChoice}
-                    onInteract={startInteraction}
-                />
-            {:else}
-                <div class="error-scene">
-                    <h2>Scene Error</h2>
-                    <p>
-                        The current scene {currentScene} could not be loaded. This
-                        might be a bug in the game.
-                    </p>
-                    <button
-                        on:click={() => {
-                            const startingScene =
-                                gameStory.scenes[gameStory.startingScene];
-                            if (startingScene) {
-                                currentScene = startingScene;
-                                currentLocation =
-                                    gameStory.startingLocation ||
-                                    gameStory.startingScene;
-                            }
-                        }}>Return to Starting Area</button
-                    >
-                </div>
             {/if}
+        </div>
+
+        <!-- Story and Character (bottom 1/3) -->
+        <div class="bottom-container">
+            <div class="character-panel">
+                <Character {spendSkillPoint} />
+            </div>
+
+            <div class="story-panel">
+                {#if activeInteraction}
+                    <Interaction
+                        character={activeInteraction}
+                        player={$characterStore}
+                        onDialogueEnd={endInteraction}
+                    />
+                {:else if currentScene}
+                    <StoryEngine
+                        scene={currentScene}
+                        {makeChoice}
+                        onInteract={startInteraction}
+                    />
+                {:else}
+                    <div class="error-scene">
+                        <h2>Scene Error</h2>
+                        <p>
+                            The current scene {currentScene} could not be loaded. This
+                            might be a bug in the game.
+                        </p>
+                        <button
+                            on:click={() => {
+                                const startingScene =
+                                    gameStory.scenes[gameStory.startingScene];
+                                if (startingScene) {
+                                    currentScene = startingScene;
+                                    currentLocation =
+                                        gameStory.startingLocation ||
+                                        gameStory.startingScene;
+                                }
+                            }}>Return to Starting Area</button
+                        >
+                    </div>
+                {/if}
+            </div>
         </div>
     </div>
 </div>
@@ -408,7 +408,24 @@
 
     .game-container {
         display: flex;
-        gap: 20px;
+        flex-direction: column;
+        gap: 15px;
+        height: calc(100vh - 120px); /* Adjust for header and margins */
+    }
+
+    .map-panel {
+        height: 66%; /* Top 2/3 of the screen */
+        background: #f8f8f8;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .bottom-container {
+        display: flex;
+        gap: 15px;
+        height: 33%; /* Bottom 1/3 of the screen */
     }
 
     .character-panel {
@@ -416,6 +433,8 @@
         padding: 15px;
         background: #f0f0f0;
         border-radius: 8px;
+        overflow: auto;
+        max-height: 100%;
     }
 
     .story-panel {
@@ -425,6 +444,8 @@
         border: 1px solid #ddd;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow: auto;
+        max-height: 100%;
     }
 
     .current-area-info {
@@ -456,23 +477,5 @@
         background: #3b5;
     }
 
-    .map-button-container {
-        margin-top: 15px;
-    }
 
-    .show-map-button {
-        width: 100%;
-        padding: 12px;
-        background: #6b5b95;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: background-color 0.2s;
-    }
-
-    .show-map-button:hover {
-        background: #7d6aa9;
-    }
 </style>
