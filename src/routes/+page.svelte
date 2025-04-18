@@ -1,7 +1,7 @@
 <script>
     import { goto } from "$app/navigation";
     function gotoCreateCharacter() {
-        goto("/characterhome");
+        goto("/character");
     }
 </script>
 
