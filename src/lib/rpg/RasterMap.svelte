@@ -12,6 +12,10 @@
     export let interactiveAreas = []; // Areas that trigger events when entered
     export let moveSpeed = 10; // Pixels per movement
     export let allowMovement = true;
+    
+    // Viewport properties
+    export let viewportWidth = 800; // Width of the viewport (canvas)
+    export let viewportHeight = 600; // Height of the viewport (canvas)
 
     // Create a dispatcher for events
     const dispatch = createEventDispatcher();
@@ -22,6 +26,10 @@
     let ctx;
     let animationFrame;
     let playerSize = 30; // Size of player avatar in pixels
+    
+    // Track viewport offset
+    let viewportOffsetX = 0;
+    let viewportOffsetY = 0;
 
     onMount(() => {
         // Set up the canvas
@@ -122,6 +130,10 @@
             }
         }
 
+        // Valid position - update viewport offset when position changes
+        // This makes sure viewport is updated immediately after position check
+        updateViewportOffset();
+        
         return true;
     }
 
@@ -206,16 +218,8 @@
         }
     }
     
-    // Calculate viewport offset to keep player centered
-    let viewportOffsetX = 0;
-    let viewportOffsetY = 0;
-    
     function updateViewportOffset() {
         if (!canvasElement) return;
-        
-        // Get canvas dimensions
-        const viewportWidth = canvasElement.width;
-        const viewportHeight = canvasElement.height;
         
         // Calculate the offset needed to keep player centered in viewport
         viewportOffsetX = playerPosition.x - viewportWidth/2;
@@ -232,10 +236,6 @@
         // Update viewport offset to follow player
         updateViewportOffset();
         
-        // Get viewport dimensions
-        const viewportWidth = canvasElement.width;
-        const viewportHeight = canvasElement.height;
-        
         // Clear the entire canvas
         ctx.clearRect(0, 0, viewportWidth, viewportHeight);
         
@@ -245,18 +245,26 @@
         // Translate context to create camera effect - center the view on player
         ctx.translate(-viewportOffsetX, -viewportOffsetY);
         
-        // Draw dot grid instead of map image
+        // Draw dot grid for the entire map
         drawDotGrid();
+
+        // Draw map boundaries as a visual indicator
+        ctx.strokeStyle = "rgba(50, 50, 50, 0.5)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(0, 0, mapWidth, mapHeight);
 
         // Draw obstacles - always visible
         ctx.fillStyle = "rgba(100, 70, 50, 0.5)"; // Brown color for obstacles
         for (const obstacle of obstacles) {
+            // Only draw obstacles that are within or near the viewport
+            if (!isObjectInViewport(obstacle, 50)) continue;
+            
             if (obstacle.type === "rect") {
                 ctx.fillRect(
                     obstacle.x,
                     obstacle.y,
                     obstacle.width,
-                    obstacle.height,
+                    obstacle.height
                 );
                 
                 // Add a subtle border
@@ -275,7 +283,7 @@
                     obstacle.y,
                     obstacle.radius,
                     0,
-                    Math.PI * 2,
+                    Math.PI * 2
                 );
                 ctx.fill();
                 
@@ -290,6 +298,8 @@
         if (window.DEBUG_MODE) {
             ctx.fillStyle = "rgba(0, 255, 0, 0.3)";
             for (const area of interactiveAreas) {
+                if (!isObjectInViewport(area, 50)) continue;
+                
                 if (area.type === "rect") {
                     ctx.fillRect(area.x, area.y, area.width, area.height);
                 } else if (area.type === "circle") {
@@ -302,6 +312,9 @@
         
         // Draw location icons for interactive areas
         for (const area of interactiveAreas) {
+            // Skip areas that are far outside the viewport
+            if (!isObjectInViewport(area, 50)) continue;
+            
             // Get coordinates
             const x = area.x;
             const y = area.y;
@@ -359,7 +372,7 @@
                 playerViewportY,
                 playerSize / 2,
                 0,
-                Math.PI * 2,
+                Math.PI * 2
             );
             ctx.fill();
 
@@ -382,16 +395,45 @@
             ctx.stroke();
         }
     }
+    
+    // Helper function to check if an object is within or near the viewport
+    function isObjectInViewport(obj, padding = 0) {
+        // For rectangular objects
+        if (obj.type === "rect") {
+            return !(obj.x > viewportOffsetX + viewportWidth + padding ||
+                    obj.x + obj.width < viewportOffsetX - padding ||
+                    obj.y > viewportOffsetY + viewportHeight + padding ||
+                    obj.y + obj.height < viewportOffsetY - padding);
+        }
+        
+        // For circular objects
+        if (obj.type === "circle") {
+            const radius = obj.radius || 30;
+            return !(obj.x + radius < viewportOffsetX - padding ||
+                    obj.x - radius > viewportOffsetX + viewportWidth + padding ||
+                    obj.y + radius < viewportOffsetY - padding ||
+                    obj.y - radius > viewportOffsetY + viewportHeight + padding);
+        }
+        
+        // For point objects (default to small rectangle)
+        return !(obj.x > viewportOffsetX + viewportWidth + padding ||
+                obj.x < viewportOffsetX - padding ||
+                obj.y > viewportOffsetY + viewportHeight + padding ||
+                obj.y < viewportOffsetY - padding);
+    }
 
     // Handle click on map
     function handleMapClick(event) {
+        // Get click position in the canvas element
         const rect = canvasElement.getBoundingClientRect();
-        const viewportX = event.clientX - rect.left;
-        const viewportY = event.clientY - rect.top;
+        const canvasX = event.clientX - rect.left;
+        const canvasY = event.clientY - rect.top;
         
-        // Convert viewport coordinates to map coordinates
-        const mapX = viewportX + viewportOffsetX;
-        const mapY = viewportY + viewportOffsetY;
+        // Convert canvas coordinates to map coordinates by adding viewport offset
+        const mapX = canvasX + viewportOffsetX;
+        const mapY = canvasY + viewportOffsetY;
+
+        console.log('Click detected - Canvas coords:', canvasX, canvasY, 'Map coords:', mapX, mapY);
 
         // Dispatch click event with map coordinates
         dispatch("mapClicked", { x: mapX, y: mapY });
@@ -408,8 +450,8 @@
 <div class="raster-map-container">
     <canvas
         bind:this={canvasElement}
-        width={mapWidth}
-        height={mapHeight}
+        width={viewportWidth}
+        height={viewportHeight}
         on:click={handleMapClick}
     ></canvas>
 

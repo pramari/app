@@ -77,10 +77,18 @@ export const mapData = {
       y: 650,
       icon: "🏰",
     },
+    {
+      id: "unused_location",
+      name: "Unused Location",
+      description: "An unused location.",
+      x: 800,
+      y: 800,
+      icon: "❓",
+    },
   ],
 
   // Connections define paths between locations and any requirements to travel
-  connections: [
+  unused_connections: [
     // Village connections
     { from: "village_square", to: "tavern" },
     { from: "village_square", to: "blacksmith" },

@@ -9,7 +9,7 @@
     } from "$lib/stories/skills.ts";
 
     import { characterStore, updateCharacter } from "$lib/stores/character.ts";
-    import { characterClasses } from "$lib/stories/characterClasses.ts";
+    import { characterClasses } from "$lib/stories/characterclasses.ts";
 
     import { goto } from "$app/navigation";
 
@@ -647,8 +647,12 @@
                     <h3>Piercings</h3>
                     <div class="tattoo-input">
                         <div class="tattoo-location">
-                            <label for="piercing-location">Location:</label><br />
-                            <select id="piercing-location" bind:value={customPiercing}>
+                            <label for="piercing-location">Location:</label><br
+                            />
+                            <select
+                                id="piercing-location"
+                                bind:value={customPiercing}
+                            >
                                 <option value="">Select or type below</option>
                                 {#each piercingOptions as location}
                                     <option value={location}>{location}</option>
@@ -662,7 +666,9 @@
                         </div>
 
                         <div class="tattoo-description">
-                            <label for="piercing-description">Description:</label><br />
+                            <label for="piercing-description"
+                                >Description:</label
+                            ><br />
                             <input
                                 id="piercing-description"
                                 type="text"
@@ -687,7 +693,7 @@
                                         <button
                                             class="remove-btn"
                                             onclick={() => removePiercing(i)}
-                                        >×</button
+                                            >×</button
                                         >
                                     </li>
                                 {/each}

@@ -38,18 +38,13 @@
 </script>
 
 <div class="raster-map-view">
-    <div class="map-header">
-        <h2>World Map</h2>
-        <div class="map-controls">
-            <button class="close-button" on:click={onClose}>×</button>
-        </div>
-    </div>
-
     <div class="map-container">
         <RasterMap
             mapImage={mapData.image}
             mapWidth={mapData.width || 800}
             mapHeight={mapData.height || 600}
+            viewportWidth={800}
+            viewportHeight={600}
             {playerPosition}
             playerAvatar={mapData.playerAvatar || "🧙‍♂️"}
             obstacles={mapData.obstacles || []}
@@ -73,17 +68,6 @@
         padding: 20px;
         max-width: 100%;
         box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-    }
-
-    .map-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-
-    .map-header h2 {
-        margin: 0;
     }
 
     .map-controls {
