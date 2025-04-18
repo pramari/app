@@ -79,15 +79,18 @@
 
     /* Styles for Body section */
     .body-details {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
     }
 
     .attribute-row {
         display: flex;
-        padding: 5px 0;
+        padding: 8px;
         border-bottom: 1px solid #eaeaea;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
 
     .attribute-label {
@@ -98,11 +101,5 @@
 
     .attribute-value {
         flex-grow: 1;
-    }
-
-    @media (max-width: 600px) {
-        .body-details {
-            grid-template-columns: 1fr;
-        }
     }
 </style>

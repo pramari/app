@@ -13,7 +13,7 @@
     import { getScene, getSceneForLocation } from "$lib/rpg/utils.js";
     import { onMount } from "svelte";
     import { page } from "$app/stores";
-    
+
     // Receive authenticated user from parent component
     let { user } = $props();
 
@@ -304,41 +304,39 @@
 </script>
 
 <div class="rpg-game">
-    <div class="user-info">
-        <h2>Welcome, {user.name}!</h2>
-        <p>Playing as {$characterStore.name || 'Unnamed Character'}</p>
-    </div>
     <div class="game-container">
-        <!-- Map View (top 2/3) -->
-        <div class="map-panel">
-            {#if showingMap}
-                <RasterMapView
-                    mapData={gameStory.map.rasterMap}
-                    playerPosition={playerMapPosition}
-                    onAreaEntered={handleAreaEntered}
-                    onAreaLeft={handleAreaLeft}
-                />
-                {#if currentArea}
-                    <div class="current-area-info">
-                        <h3>{currentArea.name}</h3>
-                        <p>{currentArea.description}</p>
-                        <button
-                            class="explore-button"
-                            on:click={exploreCurrentArea}
-                        >
-                            Explore {currentArea.name}
-                        </button>
-                    </div>
-                {/if}
-            {/if}
+        <!-- Character Panel (Full Height Left Column) -->
+        <div class="character-panel">
+            <Character {spendSkillPoint} />
         </div>
 
-        <!-- Story and Character (bottom 1/3) -->
-        <div class="bottom-container">
-            <div class="character-panel">
-                <Character {spendSkillPoint} />
+        <!-- Main Game Area (Right Column) -->
+        <div class="main-game-area">
+            <!-- Map View -->
+            <div class="map-panel">
+                {#if showingMap}
+                    <RasterMapView
+                        mapData={gameStory.map.rasterMap}
+                        playerPosition={playerMapPosition}
+                        onAreaEntered={handleAreaEntered}
+                        onAreaLeft={handleAreaLeft}
+                    />
+                    {#if currentArea}
+                        <div class="current-area-info">
+                            <h3>{currentArea.name}</h3>
+                            <p>{currentArea.description}</p>
+                            <button
+                                class="explore-button"
+                                on:click={exploreCurrentArea}
+                            >
+                                Explore {currentArea.name}
+                            </button>
+                        </div>
+                    {/if}
+                {/if}
             </div>
 
+            <!-- Story Panel -->
             <div class="story-panel">
                 {#if activeInteraction}
                     <Interaction
@@ -356,8 +354,8 @@
                     <div class="error-scene">
                         <h2>Scene Error</h2>
                         <p>
-                            The current scene {currentScene} could not be loaded. This
-                            might be a bug in the game.
+                            The current scene {currentScene} could not be loaded.
+                            This might be a bug in the game.
                         </p>
                         <button
                             on:click={() => {
@@ -381,11 +379,11 @@
 <style>
     .rpg-game {
         font-family: "Trebuchet MS", Arial, sans-serif;
-        max-width: 1000px;
+        max-width: 1200px;
         margin: 0 auto;
         padding: 20px;
     }
-    
+
     .user-info {
         background: #f8f8f8;
         border-radius: 8px;
@@ -394,13 +392,13 @@
         border: 1px solid #ddd;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
-    
+
     .user-info h2 {
         margin-top: 0;
         color: #333;
         font-size: 1.5rem;
     }
-    
+
     .user-info p {
         margin-bottom: 0;
         color: #666;
@@ -408,13 +406,21 @@
 
     .game-container {
         display: flex;
-        flex-direction: column;
-        gap: 15px;
+        flex-direction: row; /* Changed to row layout */
+        gap: 20px;
         height: calc(100vh - 120px); /* Adjust for header and margins */
     }
 
+    .main-game-area {
+        display: flex;
+        flex-direction: column;
+        flex: 3; /* Take up 3/4 of the available horizontal space */
+        gap: 15px;
+        height: 100%;
+    }
+
     .map-panel {
-        height: 66%; /* Top 2/3 of the screen */
+        height: 70%; /* Top portion of the game area */
         background: #f8f8f8;
         border-radius: 8px;
         border: 1px solid #ddd;
@@ -422,30 +428,24 @@
         position: relative;
     }
 
-    .bottom-container {
-        display: flex;
-        gap: 15px;
-        height: 33%; /* Bottom 1/3 of the screen */
-    }
-
     .character-panel {
-        flex: 1;
+        width: 300px; /* Fixed width for character panel */
         padding: 15px;
         background: #f0f0f0;
         border-radius: 8px;
         overflow: auto;
-        max-height: 100%;
+        height: 100%; /* Full height */
+        border: 1px solid #ddd;
     }
 
     .story-panel {
-        flex: 2;
+        height: 30%; /* Bottom portion of the game area */
         padding: 15px;
         background: #fff;
         border: 1px solid #ddd;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         overflow: auto;
-        max-height: 100%;
     }
 
     .current-area-info {
@@ -477,5 +477,20 @@
         background: #3b5;
     }
 
+    /* Responsive layout for smaller screens */
+    @media (max-width: 768px) {
+        .game-container {
+            flex-direction: column;
+        }
 
+        .character-panel {
+            width: 100%;
+            height: auto;
+            max-height: 200px;
+        }
+
+        .main-game-area {
+            flex: 1;
+        }
+    }
 </style>

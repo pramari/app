@@ -6,7 +6,7 @@
     import Skills from "$lib/rpg/widgets/Skills.svelte";
     import Inventory from "$lib/rpg/widgets/Inventory.svelte";
     import Abilitites from "$lib/rpg/widgets/Abilitites.svelte";
-    import Body from "$lib/rpg/widgets/Body.svelte";
+    import Attributes from "$lib/rpg/widgets/Attributes.svelte";
 
     export let spendSkillPoint;
 
@@ -50,7 +50,7 @@
     </a>
 
     {#if expandedSection === "body" && $characterStore.body}
-        <Body />
+        <Attributes />
     {/if}
 
     <div class="stats-section">

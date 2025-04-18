@@ -14,6 +14,14 @@ export const mapData = {
       icon: "🏠",
     },
     {
+      id: "photo_agency",
+      name: "Photo Agency",
+      description: "A place where you can take pictures for your adventures.",
+      x: 400,
+      y: 400,
+      icon: "📸",
+    },
+    {
       id: "forest_path",
       name: "Forest Path",
       description: "A winding path through the ancient forest.",

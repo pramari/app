@@ -18,6 +18,13 @@ export const gameStory = {
         description: "The place where you live",
         icon: "🏠", // Emoji or custom icon
       },
+      photo_agency: {
+        name: "Photo Agency",
+        description: "A place where you can take pictures for your adventures.",
+        x: 400,
+        y: 400,
+        icon: "📸",
+      },
       village_square: {
         name: "Village Square",
         description: "The central gathering place of Willowbrook village.",
