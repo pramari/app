@@ -2,11 +2,11 @@
 <script>
     import { characterClasses } from "$lib/stories/characterclasses.ts";
     import { characterStore } from "$lib/stores/character.ts";
-    import Stats from "$lib/widgets/Stats.svelte";
-    import Skills from "$lib/widgets/Skills.svelte";
-    import Inventory from "$lib/widgets/Inventory.svelte";
-    import Abilitites from "$lib/widgets/Abilitites.svelte";
-    import Body from "$lib/widgets/Body.svelte";
+    import Stats from "$lib/rpg/widgets/Stats.svelte";
+    import Skills from "$lib/rpg/widgets/Skills.svelte";
+    import Inventory from "$lib/rpg/widgets/Inventory.svelte";
+    import Abilitites from "$lib/rpg/widgets/Abilitites.svelte";
+    import Body from "$lib/rpg/widgets/Body.svelte";
 
     export let spendSkillPoint;
 

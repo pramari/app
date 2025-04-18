@@ -13,6 +13,24 @@ npx sv create
 # create a new project in my-app
 npx sv create my-app
 ```
+## Sync
+
+```
+▲ [WARNING] Cannot find base config file "./.svelte-kit/tsconfig.json" [tsconfig.json]
+```
+
+```
+#
+npx svelte-kit sync
+```
+
+## NextAuth Add Secret
+
+AUTH_SECRET needs to be set for NextAuth to work.
+
+```
+npx auth secret
+```
 
 ## Developing
 

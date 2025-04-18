@@ -1,11 +1,14 @@
 <script>
-    import RPGGame from "$lib/components/RPGGame.svelte";
+    import RPGGame from "$lib/rpg/RPGGame.svelte";
     import { characterStore } from "$lib/stores/character";
     import { onMount } from "svelte";
+    import { page } from "$app/stores";
 </script>
 
 <main>
-    <RPGGame />
+    {#if $page.data.user}
+        <RPGGame user={$page.data.user} />
+    {/if}
 </main>
 
 <style>
