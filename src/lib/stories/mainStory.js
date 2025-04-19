@@ -128,7 +128,7 @@ export const gameStory = {
 
     // Raster map data
     rasterMap: {
-      image: "/images/world_map_full.jpg", // High-resolution map image
+      // image: "/images/world_map_full.jpg", // High-resolution map image
       width: 1600,
       height: 1200,
       playerAvatar: "🧙‍♂️", // Or use a character sprite
