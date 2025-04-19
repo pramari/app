@@ -7,7 +7,7 @@ export const gameStory = {
 
   // Map configuration
   map: {
-    image: "/images/world_map.jpg", // Background image for your map
+    // image: "/images/world_map.jpg", // Background image for your map
     width: 800,
     height: 600,
 

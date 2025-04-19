@@ -3,7 +3,6 @@
     import { createEventDispatcher, onMount } from "svelte";
 
     // Export props
-    export let mapImage;
     export let mapWidth = 400;
     export let mapHeight = 300;
     export let playerPosition = { x: 200, y: 150 };
@@ -12,10 +11,10 @@
     export let interactiveAreas = []; // Areas that trigger events when entered
     export let moveSpeed = 10; // Pixels per movement
     export let allowMovement = true;
-    
+
     // Viewport properties
-    export let viewportWidth = 800; // Width of the viewport (canvas)
-    export let viewportHeight = 600; // Height of the viewport (canvas)
+    export let viewportWidth = 400; // Width of the viewport (canvas)
+    export let viewportHeight = 300; // Height of the viewport (canvas)
 
     // Create a dispatcher for events
     const dispatch = createEventDispatcher();
@@ -26,7 +25,7 @@
     let ctx;
     let animationFrame;
     let playerSize = 30; // Size of player avatar in pixels
-    
+
     // Track viewport offset
     let viewportOffsetX = 0;
     let viewportOffsetY = 0;
@@ -38,7 +37,6 @@
 
             // Load map image
             const img = new Image();
-            img.src = mapImage;
             img.onload = () => {
                 // Initial draw of the map
                 drawMap(img);
@@ -133,7 +131,7 @@
         // Valid position - update viewport offset when position changes
         // This makes sure viewport is updated immediately after position check
         updateViewportOffset();
-        
+
         return true;
     }
 
@@ -200,14 +198,14 @@
         // Set background color
         ctx.fillStyle = "#f8f8f8";
         ctx.fillRect(0, 0, mapWidth, mapHeight);
-        
+
         // Set up the dot grid style
         ctx.fillStyle = "#cccccc";
-        
+
         // Define dot size and spacing
         const dotSize = 1.5;
         const spacing = 20;
-        
+
         // Draw the grid of dots
         for (let x = spacing; x < mapWidth; x += spacing) {
             for (let y = spacing; y < mapHeight; y += spacing) {
@@ -217,34 +215,40 @@
             }
         }
     }
-    
+
     function updateViewportOffset() {
         if (!canvasElement) return;
-        
+
         // Calculate the offset needed to keep player centered in viewport
-        viewportOffsetX = playerPosition.x - viewportWidth/2;
-        viewportOffsetY = playerPosition.y - viewportHeight/2;
-        
+        viewportOffsetX = playerPosition.x - viewportWidth / 2;
+        viewportOffsetY = playerPosition.y - viewportHeight / 2;
+
         // Clamp offset to map boundaries
-        viewportOffsetX = Math.max(0, Math.min(viewportOffsetX, mapWidth - viewportWidth));
-        viewportOffsetY = Math.max(0, Math.min(viewportOffsetY, mapHeight - viewportHeight));
+        viewportOffsetX = Math.max(
+            0,
+            Math.min(viewportOffsetX, mapWidth - viewportWidth),
+        );
+        viewportOffsetY = Math.max(
+            0,
+            Math.min(viewportOffsetY, mapHeight - viewportHeight),
+        );
     }
-    
+
     function drawMap(mapImg) {
         if (!ctx) return;
 
         // Update viewport offset to follow player
         updateViewportOffset();
-        
+
         // Clear the entire canvas
         ctx.clearRect(0, 0, viewportWidth, viewportHeight);
-        
+
         // Save context state
         ctx.save();
-        
+
         // Translate context to create camera effect - center the view on player
         ctx.translate(-viewportOffsetX, -viewportOffsetY);
-        
+
         // Draw dot grid for the entire map
         drawDotGrid();
 
@@ -258,15 +262,15 @@
         for (const obstacle of obstacles) {
             // Only draw obstacles that are within or near the viewport
             if (!isObjectInViewport(obstacle, 50)) continue;
-            
+
             if (obstacle.type === "rect") {
                 ctx.fillRect(
                     obstacle.x,
                     obstacle.y,
                     obstacle.width,
-                    obstacle.height
+                    obstacle.height,
                 );
-                
+
                 // Add a subtle border
                 ctx.strokeStyle = "rgba(80, 50, 30, 0.8)";
                 ctx.lineWidth = 1;
@@ -274,7 +278,7 @@
                     obstacle.x,
                     obstacle.y,
                     obstacle.width,
-                    obstacle.height
+                    obstacle.height,
                 );
             } else if (obstacle.type === "circle") {
                 ctx.beginPath();
@@ -283,10 +287,10 @@
                     obstacle.y,
                     obstacle.radius,
                     0,
-                    Math.PI * 2
+                    Math.PI * 2,
                 );
                 ctx.fill();
-                
+
                 // Add a subtle border
                 ctx.strokeStyle = "rgba(80, 50, 30, 0.8)";
                 ctx.lineWidth = 1;
@@ -299,7 +303,7 @@
             ctx.fillStyle = "rgba(0, 255, 0, 0.3)";
             for (const area of interactiveAreas) {
                 if (!isObjectInViewport(area, 50)) continue;
-                
+
                 if (area.type === "rect") {
                     ctx.fillRect(area.x, area.y, area.width, area.height);
                 } else if (area.type === "circle") {
@@ -309,39 +313,40 @@
                 }
             }
         }
-        
+
         // Draw location icons for interactive areas
         for (const area of interactiveAreas) {
             // Skip areas that are far outside the viewport
             if (!isObjectInViewport(area, 50)) continue;
-            
+
             // Get coordinates
             const x = area.x;
             const y = area.y;
-            
+
             // Draw icon background
             ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
             ctx.beginPath();
             ctx.arc(x, y, 15, 0, Math.PI * 2);
             ctx.fill();
-            
+
             // Draw icon or letter
             ctx.font = "16px Arial";
             ctx.fillStyle = "#333";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            
+
             // Use area name initial if no icon specified
             const icon = area.icon || area.name?.charAt(0) || "?";
             ctx.fillText(icon, x, y);
-            
+
             // Draw name below (only if player is nearby)
             const distToPlayer = Math.sqrt(
-                Math.pow(playerPosition.x - x, 2) + 
-                Math.pow(playerPosition.y - y, 2)
+                Math.pow(playerPosition.x - x, 2) +
+                    Math.pow(playerPosition.y - y, 2),
             );
-            
-            if (distToPlayer < 120) { // Only show names when close enough
+
+            if (distToPlayer < 120) {
+                // Only show names when close enough
                 ctx.font = "12px Arial";
                 ctx.fillStyle = "black";
                 ctx.fillText(area.name || area.id, x, y + 25);
@@ -350,12 +355,12 @@
 
         // Restore context to reset translation before drawing player
         ctx.restore();
-        
+
         // Calculate player position in viewport
         // Player should be drawn at the center of the viewport, unless at map edges
         const playerViewportX = playerPosition.x - viewportOffsetX;
         const playerViewportY = playerPosition.y - viewportOffsetY;
-        
+
         // Draw player at viewport position
         if (typeof playerAvatar === "string" && playerAvatar.length <= 2) {
             // Draw emoji or character
@@ -372,7 +377,7 @@
                 playerViewportY,
                 playerSize / 2,
                 0,
-                Math.PI * 2
+                Math.PI * 2,
             );
             ctx.fill();
 
@@ -380,7 +385,7 @@
             ctx.strokeStyle = "white";
             ctx.lineWidth = 2;
             ctx.stroke();
-            
+
             // Draw a target circle around player for better visibility
             ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
             ctx.lineWidth = 1;
@@ -390,36 +395,42 @@
                 playerViewportY,
                 playerSize,
                 0,
-                Math.PI * 2
+                Math.PI * 2,
             );
             ctx.stroke();
         }
     }
-    
+
     // Helper function to check if an object is within or near the viewport
     function isObjectInViewport(obj, padding = 0) {
         // For rectangular objects
         if (obj.type === "rect") {
-            return !(obj.x > viewportOffsetX + viewportWidth + padding ||
-                    obj.x + obj.width < viewportOffsetX - padding ||
-                    obj.y > viewportOffsetY + viewportHeight + padding ||
-                    obj.y + obj.height < viewportOffsetY - padding);
+            return !(
+                obj.x > viewportOffsetX + viewportWidth + padding ||
+                obj.x + obj.width < viewportOffsetX - padding ||
+                obj.y > viewportOffsetY + viewportHeight + padding ||
+                obj.y + obj.height < viewportOffsetY - padding
+            );
         }
-        
+
         // For circular objects
         if (obj.type === "circle") {
             const radius = obj.radius || 30;
-            return !(obj.x + radius < viewportOffsetX - padding ||
-                    obj.x - radius > viewportOffsetX + viewportWidth + padding ||
-                    obj.y + radius < viewportOffsetY - padding ||
-                    obj.y - radius > viewportOffsetY + viewportHeight + padding);
+            return !(
+                obj.x + radius < viewportOffsetX - padding ||
+                obj.x - radius > viewportOffsetX + viewportWidth + padding ||
+                obj.y + radius < viewportOffsetY - padding ||
+                obj.y - radius > viewportOffsetY + viewportHeight + padding
+            );
         }
-        
+
         // For point objects (default to small rectangle)
-        return !(obj.x > viewportOffsetX + viewportWidth + padding ||
-                obj.x < viewportOffsetX - padding ||
-                obj.y > viewportOffsetY + viewportHeight + padding ||
-                obj.y < viewportOffsetY - padding);
+        return !(
+            obj.x > viewportOffsetX + viewportWidth + padding ||
+            obj.x < viewportOffsetX - padding ||
+            obj.y > viewportOffsetY + viewportHeight + padding ||
+            obj.y < viewportOffsetY - padding
+        );
     }
 
     // Handle click on map
@@ -428,12 +439,19 @@
         const rect = canvasElement.getBoundingClientRect();
         const canvasX = event.clientX - rect.left;
         const canvasY = event.clientY - rect.top;
-        
+
         // Convert canvas coordinates to map coordinates by adding viewport offset
         const mapX = canvasX + viewportOffsetX;
         const mapY = canvasY + viewportOffsetY;
 
-        console.log('Click detected - Canvas coords:', canvasX, canvasY, 'Map coords:', mapX, mapY);
+        console.log(
+            "Click detected - Canvas coords:",
+            canvasX,
+            canvasY,
+            "Map coords:",
+            mapX,
+            mapY,
+        );
 
         // Dispatch click event with map coordinates
         dispatch("mapClicked", { x: mapX, y: mapY });

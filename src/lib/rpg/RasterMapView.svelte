@@ -43,8 +43,8 @@
             mapImage={mapData.image}
             mapWidth={mapData.width || 800}
             mapHeight={mapData.height || 600}
-            viewportWidth={800}
-            viewportHeight={600}
+            viewportWidth={400}
+            viewportHeight={300}
             {playerPosition}
             playerAvatar={mapData.playerAvatar || "🧙‍♂️"}
             obstacles={mapData.obstacles || []}

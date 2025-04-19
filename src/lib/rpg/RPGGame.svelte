@@ -420,7 +420,7 @@
     }
 
     .map-panel {
-        height: 70%; /* Top portion of the game area */
+        height: 100%; /* Top portion of the game area */
         background: #f8f8f8;
         border-radius: 8px;
         border: 1px solid #ddd;

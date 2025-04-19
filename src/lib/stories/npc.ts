@@ -1,5 +1,91 @@
-// src/lib/data/stories/npcs.js
-export const npcs = {
+// src/lib/stories/npc.ts
+
+// Skill requirements interface
+interface SkillRequirements {
+  [key: string]: number; // Skill name and required level
+}
+
+// Requirement interface
+interface Requirements {
+  skills?: SkillRequirements;
+  // Could be extended with other requirement types like items, level, etc.
+}
+
+// Item interface
+interface Item {
+  id: string;
+  name: string;
+  description: string;
+  quantity?: number;
+}
+
+// Effects interface for dialogue options
+interface DialogueEffects {
+  experience?: number;
+  relationship?: number;
+  items?: Item[];
+  quests?: {
+    [key: string]: string; // Quest ID and its new status
+  };
+  // Could be extended with other effects
+}
+
+// Dialogue option interface
+interface DialogueOption {
+  text: string;
+  response: string;
+  next: string | null;
+  requirements?: Requirements;
+  requirementHint?: string;
+  effects?: DialogueEffects;
+}
+
+// Dialogue section interface
+interface DialogueSection {
+  options: DialogueOption[];
+}
+
+// Dialogue sections dictionary
+interface DialogueSections {
+  [key: string]: DialogueSection;
+}
+
+// NPC dialogues interface
+interface NPCDialogues {
+  greeting: string;
+  farewell: string;
+  options: DialogueOption[];
+  sections: DialogueSections;
+}
+
+// Main NPC interface
+export interface NPC {
+  id: string;
+  name: string;
+  portrait: string;
+  description: string;
+  dialogues: NPCDialogues;
+}
+
+// Type for the NPCs collection
+export interface NPCCollection {
+  [key: string]: NPC;
+}
+
+// NPCs data with type validation
+export const npcs: NPCCollection = {
+  spiegler: {
+    id: "spiegler",
+    name: "",
+    portrait: "",
+    description: "",
+    dialogues: {
+      greeting: "",
+      farewell: "",
+      options: [],
+      sections: {},
+    },
+  },
   thaddeus: {
     id: "thaddeus",
     name: "Old Man Thaddeus",
@@ -94,3 +180,30 @@ export const npcs = {
   },
   // More NPCs...
 };
+
+// Helper function to get an NPC by ID with type safety
+export function getNPC(id: string): NPC | undefined {
+  return npcs[id];
+}
+
+// Helper function to validate an NPC against the type definition
+export function validateNPC(npc: any): boolean {
+  // Basic required fields
+  if (!npc.id || typeof npc.id !== 'string') return false;
+  if (typeof npc.name !== 'string') return false;
+  if (typeof npc.portrait !== 'string') return false;
+  if (typeof npc.description !== 'string') return false;
+  
+  // Dialogues validation
+  if (!npc.dialogues) return false;
+  if (typeof npc.dialogues.greeting !== 'string') return false;
+  if (typeof npc.dialogues.farewell !== 'string') return false;
+  
+  // Options validation
+  if (!Array.isArray(npc.dialogues.options)) return false;
+  
+  // Sections validation (if any)
+  if (npc.dialogues.sections && typeof npc.dialogues.sections !== 'object') return false;
+  
+  return true;
+}

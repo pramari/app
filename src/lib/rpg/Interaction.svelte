@@ -1,17 +1,35 @@
 <!-- src/lib/components/rpg/Interaction.svelte -->
-<script>
-    import { characterStore } from "$lib/stores/character.ts";
-    export let npcnpcnpccharacter; // The NPC to interact with
-    export let onDialogueEnd; // Callback for when dialogue ends
+<script lang="ts">
+    import { characterStore } from "$lib/stores/character";
+    import type { NPC } from "$lib/stories/npc";
+    
+    // Define interfaces for dialogue structures
+    interface DialogueOption {
+        text: string;
+        response: string;
+        next: string | null;
+        requirements?: any;
+        requirementHint?: string;
+        effects?: any;
+        available?: boolean;
+    }
+    
+    interface DialogueEntry {
+        speaker: string;
+        text: string;
+    }
+    
+    export let character: NPC; // The NPC to interact with
+    export let onDialogueEnd: () => void; // Callback for when dialogue ends
 
     // Dialogue state
     let currentDialogueIndex = 0;
-    let dialogueOptions = [];
+    let dialogueOptions: DialogueOption[] = [];
     let showOptions = false;
-    let dialogueHistory = [];
+    let dialogueHistory: DialogueEntry[] = [];
 
     // Initialize dialogue based on NPC and relationship/state
-    $: if (npccharacter) {
+    $: if (character) {
         initializeDialogue();
     }
 
@@ -22,15 +40,15 @@
 
         // Get starting dialogue based on NPC's attitude toward player
         // and any quest states or previous interactions
-        if (npccharacter.dialogues && npccharacter.dialogues.greeting) {
+        if (character.dialogues && character.dialogues.greeting) {
             dialogueHistory.push({
-                speaker: npccharacter.name,
-                text: npccharacter.dialogues.greeting,
+                speaker: character.name,
+                text: character.dialogues.greeting,
             });
 
             // Check if there are options for the player
-            if (npccharacter.dialogues.options) {
-                dialogueOptions = npccharacter.dialogues.options.map(
+            if (character.dialogues.options) {
+                dialogueOptions = character.dialogues.options.map(
                     (option) => {
                         // Check if option should be available based on requirements
                         const available = checkRequirements(
@@ -50,7 +68,7 @@
         }
     }
 
-    function selectDialogueOption(option) {
+    function selectDialogueOption(option: DialogueOption): void {
         // Add player's response to history
         dialogueHistory.push({
             speaker: $characterStore.name,
@@ -65,7 +83,7 @@
         // Show NPC response
         if (option.response) {
             dialogueHistory.push({
-                speaker: npccharacter.name,
+                speaker: character.name,
                 text: option.response,
             });
         }
@@ -75,8 +93,10 @@
             if (typeof option.next === "string") {
                 // Reference to another dialogue section
                 const nextDialogue = findDialogueSection(option.next);
-                if (nextDialogue) {
-                    dialogueOptions = nextDialogue.options.map((option) => {
+                if (nextDialogue && nextDialogue.options) {
+                    // Explicitly declare the type of options array
+                    const optionsArray: DialogueOption[] = nextDialogue.options;
+                    dialogueOptions = optionsArray.map((option: DialogueOption) => {
                         const available = checkRequirements(
                             option.requirements,
                         );
@@ -91,7 +111,8 @@
                 }
             } else if (Array.isArray(option.next)) {
                 // Direct next options
-                dialogueOptions = option.next.map((option) => {
+                const nextOptions: DialogueOption[] = option.next as DialogueOption[];
+                dialogueOptions = nextOptions.map((option: DialogueOption) => {
                     const available = checkRequirements(option.requirements);
                     return {
                         ...option,
@@ -106,14 +127,27 @@
         }
     }
 
-    function findDialogueSection(sectionId) {
-        if (npccharacter.dialogues && npccharacter.dialogues.sections) {
-            return npccharacter.dialogues.sections[sectionId];
+    interface DialogueSection {
+        options: DialogueOption[];
+    }
+
+    function findDialogueSection(sectionId: string): DialogueSection | null {
+        // Assert the sections object has the right type
+        type SectionMap = Record<string, DialogueSection>;
+        if (character.dialogues && character.dialogues.sections) {
+            const sections = character.dialogues.sections as Record<string, DialogueSection>;
+            return sections[sectionId];
         }
         return null;
     }
 
-    function checkRequirements(requirements) {
+    interface Requirements {
+        skills?: Record<string, number>;
+        items?: string[];
+        quests?: Record<string, string>;
+    }
+
+    function checkRequirements(requirements: Requirements | undefined): boolean {
         if (!requirements) return true;
 
         // Check skill requirements
@@ -148,8 +182,9 @@
             for (const [questId, status] of Object.entries(
                 requirements.quests,
             )) {
-                const playerQuestStatus =
-                    $characterStore.quests && $characterStore.quests[questId];
+                // Use optional chaining and type assertion for quests
+                const quests = ($characterStore as any).quests;
+                const playerQuestStatus = quests && quests[questId];
                 if (playerQuestStatus !== status) {
                     return false;
                 }
@@ -159,7 +194,14 @@
         return true;
     }
 
-    function applyDialogueEffects(effects) {
+    interface DialogueEffects {
+        items?: Array<{id: string; name: string; description: string}>;
+        relationship?: number;
+        quests?: Record<string, string>;
+        experience?: number;
+    }
+
+    function applyDialogueEffects(effects: DialogueEffects): void {
         // Add items to inventory
         if (effects.items) {
             effects.items.forEach((item) => {
@@ -173,9 +215,9 @@
         // Update relationships
         if (effects.relationship) {
             // Update NPC relationship value
-            // updateNPCRelationship(npccharacter.id, effects.relationship);
+            // updateNPCRelationship(character.id, effects.relationship);
             console.log(
-                `Relationship with ${npccharacter.name} changed by ${effects.relationship}`,
+                `Relationship with ${character.name} changed by ${effects.relationship}`,
             );
         }
 
@@ -194,15 +236,15 @@
         }
     }
 
-    function endDialogue() {
+    function endDialogue(): void {
         showOptions = false;
         dialogueOptions = [];
 
         // If there's a farewell message, show it
-        if (npccharacter.dialogues && npccharacter.dialogues.farewell) {
+        if (character.dialogues && character.dialogues.farewell) {
             dialogueHistory.push({
-                speaker: npccharacter.name,
-                text: npccharacter.dialogues.farewell,
+                speaker: character.name,
+                text: character.dialogues.farewell,
             });
         }
 
@@ -214,13 +256,13 @@
 </script>
 
 <div class="interaction-container">
-    <div class="npccharacter-portrait">
-        {#if npccharacter.portrait}
-            <img src={npccharacter.portrait} alt={npccharacter.name} />
+    <div class="character-portrait">
+        {#if character.portrait}
+            <img src={character.portrait} alt={character.name} />
         {:else}
-            <div class="default-portrait">{npccharacter.name.charAt(0)}</div>
+            <div class="default-portrait">{character.name.charAt(0)}</div>
         {/if}
-        <h3>{npccharacter.name}</h3>
+        <h3>{character.name}</h3>
     </div>
 
     <div class="dialogue-container">
@@ -273,12 +315,12 @@
         color: #f0f0f0;
     }
 
-    .npccharacter-portrait {
+    .character-portrait {
         flex: 0 0 150px;
         text-align: center;
     }
 
-    .npccharacter-portrait img {
+    .character-portrait img {
         width: 120px;
         height: 120px;
         border-radius: 60px;
