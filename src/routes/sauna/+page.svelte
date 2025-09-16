@@ -10,7 +10,7 @@
 	let isLoginButtonDisabled = true;
 	let isChatDisabled = true;
 
-	const homeserverUrl = 'https://pramari.de';
+	const homeserverUrl = 'https://matrix.pramari.de';
 	const roomAlias = '#sauna:pramari.de';
 
 	onMount(() => {
