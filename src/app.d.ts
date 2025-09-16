@@ -13,4 +13,13 @@ declare global {
 	}
 }
 
+// Additional environment variables type definitions
+declare namespace NodeJS {
+	interface ProcessEnv {
+		PRAMARI_CLIENT_ID: string;
+		PRAMARI_CLIENT_SECRET: string;
+		AUTH_SECRET: string;
+	}
+}
+
 export {};
