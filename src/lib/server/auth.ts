@@ -76,11 +76,13 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 	secret: AUTH_SECRET,
 	trustHost: true,
 	providers: [
-		Google({
-			clientId: GOOGLE_CLIENT_ID,
-			clientSecret: GOOGLE_CLIENT_SECRET,
-			authorization: { params: { scope: 'openid email' } }
-		}) as Provider,
+		/*
+	Google({
+		clientId: GOOGLE_CLIENT_ID,
+		clientSecret: GOOGLE_CLIENT_SECRET,
+		authorization: { params: { scope: 'openid email' } }
+	}) as Provider,
+ */
 		// Generic OIDC provider
 		OIDCProvider({
 			clientId: PRAMARI_CLIENT_ID,
