@@ -2,10 +2,10 @@
 	import { onMount } from 'svelte';
 	import { createClient } from 'matrix-js-sdk';
 
-	const homeserver = 'https://matrix.pramari.de';
-	const roomId = '#sauna:pramari.de';
-	let messages = [];
-	let roomName = '';
+	export let data;
+
+	let { roomName, messages: initialMessages, homeserver, roomId } = data;
+	let messages = initialMessages;
 	let client;
 	let messageContent = '';
 
@@ -15,28 +15,34 @@
 		});
 
 		try {
-			// We need to register as a guest user to join a room
 			await client.registerGuest();
-			const room = await client.joinRoom(roomId);
-			await client.startClient({ initialSyncLimit: 10 });
-
-			roomName = room.name;
-			const timeline = room.getLiveTimeline();
-			messages = timeline.getEvents();
+			await client.joinRoom(roomId);
+			await client.startClient();
 
 			client.on('Room.timeline', (event, room, toStartOfTimeline) => {
-				if (room.roomId === room.roomId) {
-					messages = [...messages, event];
+				if (room.roomId === roomId) {
+					if (event.getType() === 'm.room.message') {
+						const newMessage = {
+							sender: event.getSender(),
+							body: event.getContent().body,
+							id: event.getId()
+						};
+						// Avoid adding duplicates from the initial load
+						if (!messages.find((m) => m.id === newMessage.id)) {
+							messages = [...messages, newMessage];
+						}
+					}
 				}
 			});
 		} catch (error) {
-			console.error('Error joining room or fetching messages:', error);
-			if (error.errcode === 'M_GUEST_ACCESS_FORBIDDEN') {
-				messages = [{ content: { body: 'Guest access is not allowed in this room.' } }];
-			} else {
-				messages = [{ content: { body: 'Could not load messages.' } }];
-			}
+			console.error('Error setting up live updates:', error);
 		}
+
+		return () => {
+			if (client) {
+				client.stopClient();
+			}
+		};
 	});
 
 	const sendMessage = async () => {
@@ -58,13 +64,11 @@
 
 <div class="chat-container">
 	<div class="messages">
-		{#each messages as message}
-			{#if message.getType() === 'm.room.message'}
-				<div class="message">
-					<span class="sender">{message.getSender()}</span>
-					<p>{message.getContent().body}</p>
-				</div>
-			{/if}
+		{#each messages as message (message.id)}
+			<div class="message">
+				<span class="sender">{message.sender}</span>
+				<p>{message.body}</p>
+			</div>
 		{/each}
 	</div>
 	<div class="input-area">
