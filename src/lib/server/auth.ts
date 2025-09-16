@@ -8,8 +8,6 @@ import type { OAuthConfig, OAuthUserConfig } from '@auth/core/providers';
 import type { Provider } from '@auth/core/providers';
 import type { Session, User } from '@auth/core/types';
 import {
-	GOOGLE_CLIENT_ID,
-	GOOGLE_CLIENT_SECRET,
 	PRAMARI_CLIENT_ID,
 	PRAMARI_CLIENT_SECRET,
 	OIDC_ISSUER,
