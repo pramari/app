@@ -19,6 +19,7 @@
 
 	function logToUI(message, isChatMessage = false) {
 		messages = [...messages, { text: message, isChatMessage }];
+		console.log(message); // Log to console for debugging
 	}
 
 	function getBaseRedirectUrl() {
@@ -30,11 +31,14 @@
 		localStorage.setItem('sso_roomAlias', roomAlias);
 
 		const redirectUrl = getBaseRedirectUrl();
+		logToUI(`Redirect URL: ${redirectUrl}`); // Log redirect URL for debugging
+
 		const ssoRedirectEndpoint =
 			homeserverUrl.replace(/\/$/, '') +
-			'/_matrix/client/r0/login/sso/redirect?redirectUrl=' +
+			'/_matrix/client/v3/login/sso/redirect?redirectUrl=' +
 			encodeURIComponent(redirectUrl);
 
+		logToUI(`SSO Redirect Endpoint: ${ssoRedirectEndpoint}`); // Log SSO endpoint
 		window.location.href = ssoRedirectEndpoint;
 	}
 
@@ -42,6 +46,9 @@
 		const urlParams = new URLSearchParams(window.location.search);
 		const loginToken = urlParams.get('loginToken');
 		const storedRoomAlias = localStorage.getItem('sso_roomAlias');
+
+		logToUI(`Login Token: ${loginToken}`); // Log login token for debugging
+		logToUI(`Stored Room Alias: ${storedRoomAlias}`); // Log stored room alias
 
 		if (loginToken && storedRoomAlias) {
 			logToUI('SSO login token received. Completing login...');
@@ -65,6 +72,8 @@
 			});
 
 			logToUI('Logging in with SSO token...');
+			logToUI(`Login Token for Matrix Client: ${loginToken}`); // Log token for debugging
+
 			const loginResponse = await matrixClient.login('m.login.sso', { token: loginToken });
 
 			userId = loginResponse.user_id;
