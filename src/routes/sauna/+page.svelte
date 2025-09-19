@@ -32,13 +32,13 @@
 
 		const redirectUrl = getBaseRedirectUrl();
 		logToUI(`Redirect URL: ${redirectUrl}`); // Log redirect URL for debugging
-		alert('Redirecting for SSO login... ' + redirectUrl);
 		const ssoRedirectEndpoint =
 			homeserverUrl.replace(/\/$/, '') +
 			'/_matrix/client/v3/login/sso/redirect?redirectUrl=' +
 			encodeURIComponent(redirectUrl);
 
 		logToUI(`SSO Redirect Endpoint: ${ssoRedirectEndpoint}`); // Log SSO endpoint
+		alert('Redirecting for SSO login... ' + ssoRedirectEndpoint);
 		window.location.href = ssoRedirectEndpoint;
 	}
 
