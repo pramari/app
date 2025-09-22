@@ -71,29 +71,6 @@
 				baseUrl: homeserverUrl
 			});
 
-			logToUI('Logging in with SSO token...');
-			logToUI(`Login Token for Matrix Client: ${loginToken}`); // Log token for debugging
-
-			const loginResponse = await matrixClient.login('m.login.token', { token: loginToken });
-			alert('Login Response Received' + loginResponse);
-
-			userId = loginResponse.user_id;
-			logToUI(`Logged in as ${userId}`);
-
-			isLoginButtonDisabled = true;
-			isChatDisabled = false;
-
-			logToUI(`Joining room ${roomAliasToJoin}...`);
-			const room = await matrixClient.joinRoom(roomAliasToJoin);
-			currentRoomId = room.roomId;
-			logToUI(`Successfully joined ${roomAliasToJoin}`);
-
-			messages = []; // Clear initial logs
-			logToUI('Initializing Matrix client...');
-
-			logToUI('Starting client and syncing...');
-			await matrixClient.startClient({ initialSyncLimit: 10 });
-
 			matrixClient.on('Room.timeline', function (event, room, toStartOfTimeline) {
 				if (event.getType() !== 'm.room.message' || room.roomId !== currentRoomId) {
 					return;
@@ -106,6 +83,12 @@
 				logToUI(`${sender}: ${messageBody}`, true);
 			});
 
+
+			logToUI('Logging in with SSO token...');
+			// logToUI(`Login Token for Matrix Client: ${loginToken}`); // Log token for debugging
+
+			const loginResponse = await matrixClient.login('m.login.token', { token: loginToken });
+
 			matrixClient.once('sync', function (state, prevState, res) {
 				if (state === 'PREPARED') {
 					logToUI('Client synced. You can now send/receive messages.');
@@ -113,6 +96,24 @@
 					logToUI(`Sync error: ${res ? res.error : 'Unknown error'}`);
 				}
 			});
+
+			userId = loginResponse.user_id;
+			logToUI(`Logged in as ${userId}`);
+
+			isLoginButtonDisabled = true;
+			isChatDisabled = false;
+
+			// logToUI(`Joining room ${roomAliasToJoin}...`);
+			const room = await matrixClient.joinRoom(roomAliasToJoin);
+			currentRoomId = room.roomId;
+			// logToUI(`Successfully joined ${roomAliasToJoin}`);
+
+			messages = []; // Clear initial logs
+			logToUI('Initializing Matrix client...');
+
+			// logToUI('Starting client and syncing...');
+			await matrixClient.startClient({ initialSyncLimit: 10 });
+
 		} catch (error) {
 			logToUI(`Error during SSO login or chat setup: ${error.message || error.toString()}`);
 			console.error('SSO Login/Chat Setup Error:', error);
