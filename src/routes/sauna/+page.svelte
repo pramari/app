@@ -38,7 +38,7 @@
 			encodeURIComponent(redirectUrl);
 
 		logToUI(`SSO Redirect Endpoint: ${ssoRedirectEndpoint}`); // Log SSO endpoint
-		alert('Redirecting for SSO login... ' + ssoRedirectEndpoint);
+
 		window.location.href = ssoRedirectEndpoint;
 	}
 
@@ -74,7 +74,8 @@
 			logToUI('Logging in with SSO token...');
 			logToUI(`Login Token for Matrix Client: ${loginToken}`); // Log token for debugging
 
-			const loginResponse = await matrixClient.login('m.login.sso', { token: loginToken });
+			const loginResponse = await matrixClient.login('m.login.sso', { "m.login.token: loginToken });
+			alert('Login Response Received' + loginResponse);
 
 			userId = loginResponse.user_id;
 			logToUI(`Logged in as ${userId}`);
