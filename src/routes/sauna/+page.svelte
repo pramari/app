@@ -74,7 +74,7 @@
 			logToUI('Logging in with SSO token...');
 			logToUI(`Login Token for Matrix Client: ${loginToken}`); // Log token for debugging
 
-			const loginResponse = await matrixClient.login('m.login.sso', { 'm.login.token': loginToken });
+			const loginResponse = await matrixClient.login('m.login.token', { token: loginToken });
 			alert('Login Response Received' + loginResponse);
 
 			userId = loginResponse.user_id;
