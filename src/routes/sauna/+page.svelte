@@ -68,8 +68,12 @@
 		try {
 			logToUI('Creating Matrix client...');
 			matrixClient = createClient({
-				baseUrl: homeserverUrl
+				baseUrl: homeserverUrl,
+				store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: "matrix-js-sdk" }),
+				cryptoStore: new IndexedDBCryptoStore(window.indexedDB, "matrix-js-sdk-crypto")
 			});
+
+			await matrixClient.initCrypto(); // Initialize encryption
 
 			matrixClient.on('Room.timeline', function (event, room, toStartOfTimeline) {
 				if (event.getType() !== 'm.room.message' || room.roomId !== currentRoomId) {
@@ -83,10 +87,7 @@
 				logToUI(`${sender}: ${messageBody}`, true);
 			});
 
-
 			logToUI('Logging in with SSO token...');
-			// logToUI(`Login Token for Matrix Client: ${loginToken}`); // Log token for debugging
-
 			const loginResponse = await matrixClient.login('m.login.token', { token: loginToken });
 
 			matrixClient.once('sync', function (state, prevState, res) {
@@ -103,15 +104,12 @@
 			isLoginButtonDisabled = true;
 			isChatDisabled = false;
 
-			// logToUI(`Joining room ${roomAliasToJoin}...`);
 			const room = await matrixClient.joinRoom(roomAliasToJoin);
 			currentRoomId = room.roomId;
-			// logToUI(`Successfully joined ${roomAliasToJoin}`);
 
 			messages = []; // Clear initial logs
 			logToUI('Initializing Matrix client...');
 
-			// logToUI('Starting client and syncing...');
 			await matrixClient.startClient({ initialSyncLimit: 10 });
 
 		} catch (error) {
@@ -120,7 +118,7 @@
 			isLoginButtonDisabled = false;
 			isChatDisabled = true;
 		}
-	}
+}
 
 	async function sendMessage() {
 		if (!matrixClient || !currentRoomId) {
