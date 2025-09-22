@@ -1,6 +1,8 @@
 <script>
 	import { onMount } from 'svelte';
-	import { createClient } from 'matrix-js-sdk';
+	import { createClient, IndexedDBStore, IndexedDBCryptoStore } from 'matrix-js-sdk'; // Import the required classes
+	import * as Olm from 'olm'; // Import Olm for encryption support
+
 
 	let matrixClient;
 	let currentRoomId;
