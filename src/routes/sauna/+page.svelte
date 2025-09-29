@@ -47,7 +47,7 @@
 		const loginToken = urlParams.get('loginToken');
 		const storedRoomAlias = localStorage.getItem('sso_roomAlias');
 
-		logToUI(`Login Token: ${loginToken}`); // Log login token for debugging
+		logToUI(`Login Token Before Temp Client Login: ${loginToken}`);
 		logToUI(`Stored Room Alias: ${storedRoomAlias}`); // Log stored room alias
 
 		if (loginToken && storedRoomAlias) {
@@ -61,6 +61,7 @@
 			const tempClient = createClient({ baseUrl: homeserverUrl });
 			const loginResponse = await tempClient.login('m.login.token', { token: loginToken });
 			const userId = loginResponse.user_id; // Extract userId from the login response
+			logToUI(`Temp Client Login Response: ${JSON.stringify(loginResponse)}`);
 			const deviceId = loginResponse.device_id; // Extract deviceId from the login response
 
 			// Pass userId and deviceId to completeSsoLoginAndStartChat
@@ -120,6 +121,7 @@
 			});
 
 			logToUI('Logging in with SSO token...');
+			logToUI(`Login Token Before Main Client Login: ${loginToken}`);
 			const loginResponse = await matrixClient.login('m.login.token', { token: loginToken });
 
 			matrixClient.once('sync', function (state, prevState, res) {
@@ -145,6 +147,7 @@
 			await matrixClient.startClient({ initialSyncLimit: 10 });
 		} catch (error) {
 			logToUI(`Error during SSO login or chat setup: ${error.message || error.toString()}`);
+			logToUI(`Error Details: ${JSON.stringify(error)}`);
 			console.error('SSO Login/Chat Setup Error:', error);
 			isLoginButtonDisabled = false;
 			isChatDisabled = true;
