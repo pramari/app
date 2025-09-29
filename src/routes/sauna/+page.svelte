@@ -69,11 +69,20 @@
 	async function completeSsoLoginAndStartChat(homeserverUrl, loginToken, roomAliasToJoin) {
 		try {
 			logToUI('Creating Matrix client...');
-			matrixClient = createClient({
-				baseUrl: homeserverUrl,
-				store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: "matrix-js-sdk" }),
-				cryptoStore: new IndexedDBCryptoStore(window.indexedDB, "matrix-js-sdk-crypto")
-			});
+			if (typeof window !== 'undefined' && window.indexedDB) {
+				matrixClient = createClient({
+					baseUrl: homeserverUrl,
+					store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: "matrix-js-sdk" }),
+					cryptoStore: new IndexedDBCryptoStore(window.indexedDB, "matrix-js-sdk-crypto")
+				});
+			} else {
+				logToUI('IndexedDB is not available in this environment. Falling back to MemoryStore.');
+				matrixClient = createClient({
+					baseUrl: homeserverUrl,
+					store: new MemoryStore(),
+					cryptoStore: new IndexedDBCryptoStore(window.indexedDB, "matrix-js-sdk-crypto")
+				});
+			}
 
 			await matrixClient.initCrypto(); // Initialize encryption
 
