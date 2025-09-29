@@ -1,8 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
 	import { createClient, IndexedDBStore, IndexedDBCryptoStore, MemoryStore } from 'matrix-js-sdk'; // Import the required classes
-	import * as Olm from 'olm'; // Import Olm for encryption support
-
 
 	let matrixClient;
 	let currentRoomId;
@@ -74,8 +72,8 @@
 					console.log(IndexedDBStore); // Prevent tree shaking
 					matrixClient = createClient({
 						baseUrl: homeserverUrl,
-						store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: "matrix-js-sdk" }),
-						cryptoStore: new IndexedDBCryptoStore(window.indexedDB, "matrix-js-sdk-crypto")
+						store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: 'matrix-js-sdk' }),
+						cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
 					});
 				} else {
 					throw new Error('IndexedDB is not available');
@@ -85,11 +83,11 @@
 				matrixClient = createClient({
 					baseUrl: homeserverUrl,
 					store: new MemoryStore(),
-					cryptoStore: new IndexedDBCryptoStore(window.indexedDB, "matrix-js-sdk-crypto")
+					cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
 				});
 			}
 
-			await matrixClient.initCrypto(); // Initialize encryption
+			await matrixClient.initRustCrypto();
 
 			matrixClient.on('Room.timeline', function (event, room, toStartOfTimeline) {
 				if (event.getType() !== 'm.room.message' || room.roomId !== currentRoomId) {
@@ -127,14 +125,13 @@
 			logToUI('Initializing Matrix client...');
 
 			await matrixClient.startClient({ initialSyncLimit: 10 });
-
 		} catch (error) {
 			logToUI(`Error during SSO login or chat setup: ${error.message || error.toString()}`);
 			console.error('SSO Login/Chat Setup Error:', error);
 			isLoginButtonDisabled = false;
 			isChatDisabled = true;
 		}
-}
+	}
 
 	async function sendMessage() {
 		if (!matrixClient || !currentRoomId) {

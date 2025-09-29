@@ -35,7 +35,6 @@
 		"@auth/sveltekit": "^1.10.0",
 		"@sveltejs/adapter-auto": "^6.1.0",
 		"matrix-js-sdk": "^38.1.0",
-		"olm": "^0.0.0",
 		"wrangler": "^4.36.0"
 	}
 }
