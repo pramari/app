@@ -57,33 +57,36 @@
 			window.history.replaceState({}, document.title, cleanUrl);
 			localStorage.removeItem('sso_roomAlias');
 
-			await completeSsoLoginAndStartChat(homeserverUrl, loginToken, storedRoomAlias);
+			// Create a temporary Matrix client to log in and retrieve the userId
+			const tempClient = createClient({ baseUrl: homeserverUrl });
+			const loginResponse = await tempClient.login('m.login.token', { token: loginToken });
+			const userId = loginResponse.user_id; // Extract userId from the login response
+
+			// Pass userId to completeSsoLoginAndStartChat
+			await completeSsoLoginAndStartChat(homeserverUrl, loginToken, storedRoomAlias, userId, userId);
 		} else {
 			logToUI('Ready to login via SSO.');
 			isLoginButtonDisabled = false;
 		}
 	}
 
-	async function completeSsoLoginAndStartChat(homeserverUrl, loginToken, roomAliasToJoin) {
+	async function completeSsoLoginAndStartChat(homeserverUrl, loginToken, roomAliasToJoin, userId) {
 		try {
 			logToUI('Creating Matrix client...');
-			try {
-				if (typeof window !== 'undefined' && window.indexedDB) {
-					console.log(IndexedDBStore); // Prevent tree shaking
-					matrixClient = createClient({
-						baseUrl: homeserverUrl,
-						store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: 'matrix-js-sdk' }),
-						cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
-					});
-				} else {
-					throw new Error('IndexedDB is not available');
-				}
-			} catch (error) {
+			if (typeof window !== 'undefined' && window.indexedDB) {
+				matrixClient = createClient({
+					baseUrl: homeserverUrl,
+					store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: "matrix-js-sdk" }),
+					cryptoStore: new IndexedDBCryptoStore(window.indexedDB, "matrix-js-sdk-crypto"),
+					userId: userId // Pass the userId here
+				});
+			} else {
 				logToUI('IndexedDB is not available in this environment. Falling back to MemoryStore.');
 				matrixClient = createClient({
 					baseUrl: homeserverUrl,
 					store: new MemoryStore(),
-					cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
+					cryptoStore: new IndexedDBCryptoStore(window.indexedDB, "matrix-js-sdk-crypto"),
+					userId: userId // Pass the userId here
 				});
 			}
 
