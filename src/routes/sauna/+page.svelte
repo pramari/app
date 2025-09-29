@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import { createClient, IndexedDBStore, IndexedDBCryptoStore } from 'matrix-js-sdk'; // Import the required classes
+	import { createClient, IndexedDBStore, IndexedDBCryptoStore, MemoryStore } from 'matrix-js-sdk'; // Import the required classes
 	import * as Olm from 'olm'; // Import Olm for encryption support
 
 
@@ -69,13 +69,18 @@
 	async function completeSsoLoginAndStartChat(homeserverUrl, loginToken, roomAliasToJoin) {
 		try {
 			logToUI('Creating Matrix client...');
-			if (typeof window !== 'undefined' && window.indexedDB) {
-				matrixClient = createClient({
-					baseUrl: homeserverUrl,
-					store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: "matrix-js-sdk" }),
-					cryptoStore: new IndexedDBCryptoStore(window.indexedDB, "matrix-js-sdk-crypto")
-				});
-			} else {
+			try {
+				if (typeof window !== 'undefined' && window.indexedDB) {
+					console.log(IndexedDBStore); // Prevent tree shaking
+					matrixClient = createClient({
+						baseUrl: homeserverUrl,
+						store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: "matrix-js-sdk" }),
+						cryptoStore: new IndexedDBCryptoStore(window.indexedDB, "matrix-js-sdk-crypto")
+					});
+				} else {
+					throw new Error('IndexedDB is not available');
+				}
+			} catch (error) {
 				logToUI('IndexedDB is not available in this environment. Falling back to MemoryStore.');
 				matrixClient = createClient({
 					baseUrl: homeserverUrl,
