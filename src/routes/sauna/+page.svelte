@@ -104,6 +104,21 @@
 			logToUI('Matrix client initialized and room joined.');
 
 			await matrixClient.startClient({ initialSyncLimit: 10 });
+
+			matrixClient.on('Room.timeline', (event, room, toStartOfTimeline) => {
+				if (toStartOfTimeline) {
+					return;
+				}
+				if (event.getType() !== 'm.room.message') {
+					return;
+				}
+				if (room.roomId !== currentRoomId) {
+					return;
+				}
+				const sender = event.getSender();
+				const message = event.getContent().body;
+				logToUI(`${sender}: ${message}`, true);
+			});
 		} catch (error) {
 			logToUI(`Error during SSO login or chat setup: ${error.message}`);
 			console.error('SSO Login/Chat Setup Error:', error);
