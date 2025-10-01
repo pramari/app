@@ -75,9 +75,8 @@
 
 			logToUI(`Logged in as ${userId} with deviceId ${deviceId}`);
 
-			// This is wrong.
-			// await matrixClient.setDeviceVerified(userId, deviceId, true);
-			// logToUI('Device marked as verified.');
+			await matrixClient.setDeviceTrust(userId, deviceId, true);
+			logToUI('Device marked as trusted.');
 
 			matrixClient.on('crypto.verification.request', (request) => {
 				logToUI(
@@ -89,6 +88,14 @@
 			matrixClient.once('sync', function (state) {
 				if (state === 'PREPARED') {
 					logToUI('Client synced. You can now send/receive messages.');
+					const room = matrixClient.getRoom(currentRoomId);
+					if (room) {
+						room.timeline.forEach((event) => {
+							if (event.getType() === 'm.room.message' && event.getContent().body) {
+								logToUI(`${event.getSender()}: ${event.getContent().body}`, true);
+							}
+						});
+					}
 				} else if (state === 'ERROR') {
 					logToUI('Sync error occurred.');
 				}
@@ -100,7 +107,6 @@
 			const room = await matrixClient.joinRoom(roomAliasToJoin);
 			currentRoomId = room.roomId;
 
-			messages = [];
 			logToUI('Matrix client initialized and room joined.');
 
 			await matrixClient.startClient({ initialSyncLimit: 10 });
