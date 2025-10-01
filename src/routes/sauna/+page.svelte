@@ -137,6 +137,15 @@
 		}
 	}
 
+	async function logout() {
+		if (matrixClient) {
+			await matrixClient.logout();
+			await clearIndexedDB(); // Clears IndexedDB after logout
+			logToUI('Logged out.');
+			window.location.reload();
+		}
+	}
+
 	async function sendMessage() {
 		if (!matrixClient || !currentRoomId) {
 			alert('Client not started or Room not joined.');
