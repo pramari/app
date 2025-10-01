@@ -69,7 +69,8 @@
 			matrixClient = createClient({
 				baseUrl: homeserverUrl,
 				store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: 'matrix-js-sdk' }),
-				cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
+				cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto'),
+				deviceId: 'browser'
 			});
 
 			logToUI('Logging in with SSO token...');
