@@ -100,11 +100,10 @@
 
 			await matrixClient.startClient({ initialSyncLimit: 10 });
 		} catch (error) {
-				logToUI(`Error during SSO login or chat setup: ${error.message}`);
-				console.error('SSO Login/Chat Setup Error:', error);
-				isLoginButtonDisabled = false;
-				isChatDisabled = true;
-			}
+			logToUI(`Error during SSO login or chat setup: ${error.message}`);
+			console.error('SSO Login/Chat Setup Error:', error);
+			isLoginButtonDisabled = false;
+			isChatDisabled = true;
 		}
 	}
 
