@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import { createClient, IndexedDBStore, IndexedDBCryptoStore, MemoryStore } from 'matrix-js-sdk';
+	import { createClient, IndexedDBStore, IndexedDBCryptoStore } from 'matrix-js-sdk';
 
 	let matrixClient;
 	let currentRoomId;
@@ -176,6 +176,7 @@
 <button on:click={initiateSsoLogin} disabled={isLoginButtonDisabled}>
 	Login with SSO & Join Chat
 </button>
+<button on:click={logout} disabled={isChatDisabled}> Logout </button>
 
 <hr />
 
