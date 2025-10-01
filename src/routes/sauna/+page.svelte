@@ -100,11 +100,6 @@
 
 			await matrixClient.startClient({ initialSyncLimit: 10 });
 		} catch (error) {
-			if (error.message.includes("account in the store doesn't match")) {
-				logToUI('Account mismatch detected. Clearing IndexedDB...');
-				await clearIndexedDB();
-				await initializeMatrixClient(homeserverUrl, loginToken, roomAliasToJoin);
-			} else {
 				logToUI(`Error during SSO login or chat setup: ${error.message}`);
 				console.error('SSO Login/Chat Setup Error:', error);
 				isLoginButtonDisabled = false;
