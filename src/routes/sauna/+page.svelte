@@ -57,13 +57,7 @@
 		}
 	}
 
-	async function initializeMatrixClient(
-		homeserverUrl,
-		loginToken,
-		roomAliasToJoin,
-		userId,
-		deviceId
-	) {
+	async function initializeMatrixClient(homeserverUrl, loginToken, roomAliasToJoin) {
 		try {
 			logToUI('Creating Matrix client...');
 			matrixClient = createClient({
@@ -75,11 +69,21 @@
 
 			logToUI('Logging in with SSO token...');
 			const loginResponse = await matrixClient.login('m.login.token', { token: loginToken });
-			let userId = loginResponse.user_id;
-			let deviceId = loginResponse.device_id;
+			userId = loginResponse.user_id;
+			const deviceId = loginResponse.device_id;
 			await matrixClient.initRustCrypto();
 
-			logToUI(`Logged in as ${userId} with deviceId ${loginResponse.device_id}`);
+			logToUI(`Logged in as ${userId} with deviceId ${deviceId}`);
+
+			await matrixClient.setDeviceVerified(userId, deviceId, true);
+			logToUI('Device marked as verified.');
+
+			matrixClient.on('crypto.verification.request', (request) => {
+				logToUI(
+					`Received verification request from ${request.otherUserId}. In a real app you would now handle this request.`
+				);
+				console.log('Verification request:', request);
+			});
 
 			matrixClient.once('sync', function (state) {
 				if (state === 'PREPARED') {
@@ -141,8 +145,7 @@
 	}
 </script>
 
-<h1>Matrix Sauna Chat</h1>
-<p>A minimal client exclusively for the #sauna:pramari.de room.</p>
+<h1>Product Sauna</h1>
 
 <div>
 	<label for="userIdInput">User ID:</label>
