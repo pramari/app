@@ -65,81 +65,74 @@
 		}
 	}
 
-	async function completeSsoLoginAndStartChat(
-		homeserverUrl,
-		loginToken,
-		roomAliasToJoin,
-		userId,
-		deviceId
-	) {
-		async function completeSsoLoginAndStartChat(homeserverUrl, loginToken, roomAliasToJoin) {
-			try {
-				logToUI('Creating Matrix client...');
-				if (typeof window !== 'undefined' && window.indexedDB) {
-					try {
+	async function completeSsoLoginAndStartChat(homeserverUrl, loginToken, roomAliasToJoin) {
+		try {
+			logToUI('Creating Matrix client...');
+			if (typeof window !== 'undefined' && window.indexedDB) {
+				try {
+					matrixClient = createClient({
+						baseUrl: homeserverUrl,
+						store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: 'matrix-js-sdk' }),
+						cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
+					});
+				} catch (error) {
+					if (error.message.includes("account in the store doesn't match")) {
+						logToUI('Account mismatch detected. Clearing IndexedDB...');
+						await clearIndexedDB();
 						matrixClient = createClient({
 							baseUrl: homeserverUrl,
 							store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: 'matrix-js-sdk' }),
 							cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
 						});
-					} catch (error) {
-						if (error.message.includes("account in the store doesn't match")) {
-							logToUI('Account mismatch detected. Clearing IndexedDB...');
-							await clearIndexedDB();
-							matrixClient = createClient({
-								baseUrl: homeserverUrl,
-								store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: 'matrix-js-sdk' }),
-								cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
-							});
-						} else {
-							throw error;
-						}
+					} else {
+						throw error;
 					}
-				} else {
-					logToUI('IndexedDB is not available in this environment. Falling back to MemoryStore.');
-					matrixClient = createClient({
-						baseUrl: homeserverUrl,
-						store: new MemoryStore(),
-						cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
-					});
 				}
-
-				await matrixClient.initRustCrypto();
-
-				logToUI('Logging in with SSO token...');
-				const loginResponse = await matrixClient.login('m.login.token', { token: loginToken });
-
-				// Extract userId and deviceId from the login response
-				const userId = loginResponse.user_id;
-				const deviceId = loginResponse.device_id;
-
-				logToUI(`Logged in as ${userId} with deviceId ${deviceId}`);
-
-				matrixClient.once('sync', function (state, prevState, res) {
-					if (state === 'PREPARED') {
-						logToUI('Client synced. You can now send/receive messages.');
-					} else if (state === 'ERROR') {
-						logToUI(`Sync error: ${res ? res.error : 'Unknown error'}`);
-					}
+			} else {
+				logToUI('IndexedDB is not available in this environment. Falling back to MemoryStore.');
+				matrixClient = createClient({
+					baseUrl: homeserverUrl,
+					store: new MemoryStore(),
+					cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
 				});
-
-				isLoginButtonDisabled = true;
-				isChatDisabled = false;
-
-				const room = await matrixClient.joinRoom(roomAliasToJoin);
-				currentRoomId = room.roomId;
-
-				messages = []; // Clear initial logs
-				logToUI('Initializing Matrix client...');
-
-				await matrixClient.startClient({ initialSyncLimit: 10 });
-			} catch (error) {
-				logToUI(`Error during SSO login or chat setup: ${error.message || error.toString()}`);
-				console.error('SSO Login/Chat Setup Error:', error);
-				isLoginButtonDisabled = false;
-				isChatDisabled = true;
 			}
+
+			await matrixClient.initRustCrypto();
+
+			logToUI('Logging in with SSO token...');
+			const loginResponse = await matrixClient.login('m.login.token', { token: loginToken });
+
+			// Extract userId and deviceId from the login response
+			const userId = loginResponse.user_id;
+			const deviceId = loginResponse.device_id;
+
+			logToUI(`Logged in as ${userId} with deviceId ${deviceId}`);
+
+			matrixClient.once('sync', function (state, prevState, res) {
+				if (state === 'PREPARED') {
+					logToUI('Client synced. You can now send/receive messages.');
+				} else if (state === 'ERROR') {
+					logToUI(`Sync error: ${res ? res.error : 'Unknown error'}`);
+				}
+			});
+
+			isLoginButtonDisabled = true;
+			isChatDisabled = false;
+
+			const room = await matrixClient.joinRoom(roomAliasToJoin);
+			currentRoomId = room.roomId;
+
+			messages = []; // Clear initial logs
+			logToUI('Initializing Matrix client...');
+
+			await matrixClient.startClient({ initialSyncLimit: 10 });
+		} catch (error) {
+			logToUI(`Error during SSO login or chat setup: ${error.message || error.toString()}`);
+			console.error('SSO Login/Chat Setup Error:', error);
+			isLoginButtonDisabled = false;
+			isChatDisabled = true;
 		}
+	}
 
 	async function sendMessage() {
 		if (!matrixClient || !currentRoomId) {
@@ -166,15 +159,6 @@
 		} catch (error) {
 			logToUI(`Error sending message: ${error.toString()}`);
 			console.error('Error in sendMessage:', error);
-		}
-	}
-	async function clearIndexedDB() {
-		if (typeof window !== 'undefined' && window.indexedDB) {
-			const dbs = await window.indexedDB.databases();
-			for (const db of dbs) {
-				window.indexedDB.deleteDatabase(db.name);
-			}
-			logToUI('IndexedDB cleared due to account mismatch.');
 		}
 	}
 	async function clearIndexedDB() {
