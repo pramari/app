@@ -76,11 +76,25 @@
 			try {
 				logToUI('Creating Matrix client...');
 				if (typeof window !== 'undefined' && window.indexedDB) {
-					matrixClient = createClient({
-						baseUrl: homeserverUrl,
-						store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: 'matrix-js-sdk' }),
-						cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
-					});
+					try {
+						matrixClient = createClient({
+							baseUrl: homeserverUrl,
+							store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: 'matrix-js-sdk' }),
+							cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
+						});
+					} catch (error) {
+						if (error.message.includes("account in the store doesn't match")) {
+							logToUI('Account mismatch detected. Clearing IndexedDB...');
+							await clearIndexedDB();
+							matrixClient = createClient({
+								baseUrl: homeserverUrl,
+								store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: 'matrix-js-sdk' }),
+								cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
+							});
+						} else {
+							throw error;
+						}
+					}
 				} else {
 					logToUI('IndexedDB is not available in this environment. Falling back to MemoryStore.');
 					matrixClient = createClient({
@@ -152,6 +166,15 @@
 		} catch (error) {
 			logToUI(`Error sending message: ${error.toString()}`);
 			console.error('Error in sendMessage:', error);
+		}
+	}
+	async function clearIndexedDB() {
+		if (typeof window !== 'undefined' && window.indexedDB) {
+			const dbs = await window.indexedDB.databases();
+			for (const db of dbs) {
+				window.indexedDB.deleteDatabase(db.name);
+			}
+			logToUI('IndexedDB cleared due to account mismatch.');
 		}
 	}
 	async function clearIndexedDB() {
