@@ -57,7 +57,13 @@
 		}
 	}
 
-	async function initializeMatrixClient(homeserverUrl, loginToken, roomAliasToJoin) {
+	async function initializeMatrixClient(
+		homeserverUrl,
+		loginToken,
+		roomAliasToJoin,
+		userId,
+		deviceId
+	) {
 		try {
 			logToUI('Creating Matrix client...');
 			matrixClient = createClient({
@@ -66,12 +72,12 @@
 				cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
 			});
 
-			await matrixClient.initRustCrypto();
-
 			logToUI('Logging in with SSO token...');
 			const loginResponse = await matrixClient.login('m.login.token', { token: loginToken });
+			let userId = loginResponse.user_id;
+			let deviceId = loginResponse.device_id;
+			await matrixClient.initRustCrypto();
 
-			userId = loginResponse.user_id;
 			logToUI(`Logged in as ${userId} with deviceId ${loginResponse.device_id}`);
 
 			matrixClient.once('sync', function (state) {
