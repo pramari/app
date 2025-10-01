@@ -57,32 +57,15 @@
 			window.history.replaceState({}, document.title, cleanUrl);
 			localStorage.removeItem('sso_roomAlias');
 
-			// Pass loginToken, userId, and deviceId to completeSsoLoginAndStartChat
-			const tempClient = createClient({ baseUrl: homeserverUrl });
-			const loginResponse = await tempClient.login('m.login.token', { token: loginToken });
-			const userId = loginResponse.user_id;
-			const deviceId = loginResponse.device_id;
-
-			await completeSsoLoginAndStartChat(
-				homeserverUrl,
-				loginToken,
-				storedRoomAlias,
-				userId,
-				deviceId
-			);
+			// Pass loginToken to completeSsoLoginAndStartChat, userId and deviceId will be extracted during login
+			await completeSsoLoginAndStartChat(homeserverUrl, loginToken, storedRoomAlias);
 		} else {
 			logToUI('Ready to login via SSO.');
 			isLoginButtonDisabled = false;
 		}
 	}
 
-	async function completeSsoLoginAndStartChat(
-		homeserverUrl,
-		loginToken,
-		roomAliasToJoin,
-		userId,
-		deviceId
-	) {
+	async function completeSsoLoginAndStartChat(homeserverUrl, loginToken, roomAliasToJoin) {
 		try {
 			logToUI('Creating Matrix client...');
 			if (typeof window !== 'undefined' && window.indexedDB) {
@@ -90,9 +73,8 @@
 					matrixClient = createClient({
 						baseUrl: homeserverUrl,
 						store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: 'matrix-js-sdk' }),
-						cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto'),
-						userId: userId,
-						deviceId: deviceId
+						cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
+						// userId and deviceId will be extracted during login
 					});
 				} catch (error) {
 					if (error.message.includes("account in the store doesn't match")) {
@@ -101,9 +83,8 @@
 						matrixClient = createClient({
 							baseUrl: homeserverUrl,
 							store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: 'matrix-js-sdk' }),
-							cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto'),
-							userId: userId,
-							deviceId: deviceId
+							cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
+							// userId and deviceId will be extracted during login
 						});
 					} else {
 						throw error;
@@ -123,11 +104,8 @@
 			logToUI('Logging in with SSO token...');
 			const loginResponse = await matrixClient.login('m.login.token', { token: loginToken });
 
-			// Extract userId and deviceId from the login response
-			const userId = loginResponse.user_id;
-			const deviceId = loginResponse.device_id;
-
-			logToUI(`Logged in as ${userId} with deviceId ${deviceId}`);
+			// Log userId and deviceId from the login response
+			logToUI(`Logged in as ${loginResponse.user_id} with deviceId ${loginResponse.device_id}`);
 
 			matrixClient.once('sync', function (state, prevState, res) {
 				if (state === 'PREPARED') {
