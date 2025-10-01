@@ -75,8 +75,9 @@
 
 			logToUI(`Logged in as ${userId} with deviceId ${deviceId}`);
 
-			await matrixClient.setDeviceVerified(userId, deviceId, true);
-			logToUI('Device marked as verified.');
+			// This is wrong.
+			// await matrixClient.setDeviceVerified(userId, deviceId, true);
+			// logToUI('Device marked as verified.');
 
 			matrixClient.on('crypto.verification.request', (request) => {
 				logToUI(
@@ -176,14 +177,21 @@
 		</div>
 	{/each}
 </div>
-<input
-	type="text"
-	placeholder="Type a message..."
-	bind:value={messageInput}
-	disabled={isChatDisabled}
-	on:keydown={(e) => e.key === 'Enter' && sendMessage()}
-/>
-<button on:click={sendMessage} disabled={isChatDisabled}>Send</button>
+<div class="mt-4 flex">
+	<input
+		type="text"
+		class="flex-grow rounded-l-lg border p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+		placeholder="Type a message..."
+		bind:value={messageInput}
+		disabled={isChatDisabled}
+		on:keydown={(e) => e.key === 'Enter' && sendMessage()}
+	/>
+	<button
+		class="rounded-r-lg bg-blue-500 p-2 text-white hover:bg-blue-600 disabled:bg-gray-400"
+		on:click={sendMessage}
+		disabled={isChatDisabled}>Send</button
+	>
+</div>
 
 <style>
 	#messages {
