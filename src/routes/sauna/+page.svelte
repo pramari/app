@@ -57,15 +57,32 @@
 			window.history.replaceState({}, document.title, cleanUrl);
 			localStorage.removeItem('sso_roomAlias');
 
-			// Pass loginToken directly to completeSsoLoginAndStartChat
-			await completeSsoLoginAndStartChat(homeserverUrl, loginToken, storedRoomAlias);
+			// Pass loginToken, userId, and deviceId to completeSsoLoginAndStartChat
+			const tempClient = createClient({ baseUrl: homeserverUrl });
+			const loginResponse = await tempClient.login('m.login.token', { token: loginToken });
+			const userId = loginResponse.user_id;
+			const deviceId = loginResponse.device_id;
+
+			await completeSsoLoginAndStartChat(
+				homeserverUrl,
+				loginToken,
+				storedRoomAlias,
+				userId,
+				deviceId
+			);
 		} else {
 			logToUI('Ready to login via SSO.');
 			isLoginButtonDisabled = false;
 		}
 	}
 
-	async function completeSsoLoginAndStartChat(homeserverUrl, loginToken, roomAliasToJoin) {
+	async function completeSsoLoginAndStartChat(
+		homeserverUrl,
+		loginToken,
+		roomAliasToJoin,
+		userId,
+		deviceId
+	) {
 		try {
 			logToUI('Creating Matrix client...');
 			if (typeof window !== 'undefined' && window.indexedDB) {
@@ -73,7 +90,9 @@
 					matrixClient = createClient({
 						baseUrl: homeserverUrl,
 						store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: 'matrix-js-sdk' }),
-						cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
+						cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto'),
+						userId: userId,
+						deviceId: deviceId
 					});
 				} catch (error) {
 					if (error.message.includes("account in the store doesn't match")) {
@@ -82,7 +101,9 @@
 						matrixClient = createClient({
 							baseUrl: homeserverUrl,
 							store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: 'matrix-js-sdk' }),
-							cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto')
+							cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto'),
+							userId: userId,
+							deviceId: deviceId
 						});
 					} else {
 						throw error;
