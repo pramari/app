@@ -1,6 +1,7 @@
 <script>
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { createClient, IndexedDBStore, IndexedDBCryptoStore } from 'matrix-js-sdk';
+	import { on } from 'svelte/events';
 
 	let matrixClient;
 	let currentRoomId;
@@ -15,6 +16,10 @@
 
 	onMount(() => {
 		handleSsoCallback();
+	});
+
+	onDestroy(() => {
+		leaveRoomOnExit();
 	});
 
 	function logToUI(message, isChatMessage = false) {
@@ -127,6 +132,12 @@
 			console.error('SSO Login/Chat Setup Error:', error);
 			isLoginButtonDisabled = false;
 			isChatDisabled = true;
+		}
+	}
+
+	async function leaveRoomOnExit() {
+		if (matrixClient && currentRoomId) {
+			await matrixClient.leave(currentRoomId);
 		}
 	}
 
