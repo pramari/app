@@ -75,9 +75,6 @@
 
 			logToUI(`Logged in as ${userId} with deviceId ${deviceId}`);
 
-			await matrixClient.setDeviceTrust(userId, deviceId, true);
-			logToUI('Device marked as trusted.');
-
 			matrixClient.on('crypto.verification.request', (request) => {
 				logToUI(
 					`Received verification request from ${request.otherUserId}. In a real app you would now handle this request.`
