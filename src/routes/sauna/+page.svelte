@@ -12,7 +12,7 @@
 	let isChatDisabled = true;
 
 	const homeserverUrl = 'https://matrix.pramari.de';
-	const roomAlias = '#productsauna:pramari.de';
+	const roomAlias = '#sauna:pramari.de';
 
 	onMount(() => {
 		handleSsoCallback();
