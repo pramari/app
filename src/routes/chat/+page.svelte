@@ -156,6 +156,8 @@
 			await matrixClient.logout();
 			await clearIndexedDB(); // Clears IndexedDB after logout
 			logToUI('Logged out.');
+			isLoginButtonDisabled = false;
+			isChatDisabled = true;
 			window.location.reload();
 		}
 	}
@@ -197,7 +199,7 @@
 	/>
 </div>
 <button on:click={initiateSsoLogin} disabled={isLoginButtonDisabled}>
-	Login with SSO & Join Chat
+	Login
 </button>
 <button on:click={logout} disabled={isChatDisabled}> Logout </button>
 
