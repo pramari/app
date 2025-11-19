@@ -186,24 +186,30 @@
 	}
 </script>
 
-<h1>Product Sauna</h1>
+<nav class="flex items-center justify-between p-4 bg-gray-200">
+	<div class="flex items-center">
+		<label for="userIdInput" class="mr-2 text-gray-700 font-medium">User ID:</label>
+		<input
+			type="text"
+			id="userIdInput"
+			placeholder="Will be filled after SSO"
+			readonly
+			bind:value={userId}
+			class="p-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+		/>
+	</div>
+	<div class="flex space-x-2">
+		<button on:click={initiateSsoLogin} disabled={isLoginButtonDisabled} class="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+			Login
+		</button>
+		<button on:click={logout} disabled={isChatDisabled} class="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+			Logout
+		</button>
+	</div>
+</nav>
 
-<div>
-	<label for="userIdInput">User ID:</label>
-	<input
-		type="text"
-		id="userIdInput"
-		placeholder="Will be filled after SSO"
-		readonly
-		bind:value={userId}
-	/>
-</div>
-<button on:click={initiateSsoLogin} disabled={isLoginButtonDisabled}>
-	Login
-</button>
-<button on:click={logout} disabled={isChatDisabled}> Logout </button>
+<hr class="my-4" />
 
-<hr />
 
 <div id="messages">
 	{#each messages as msg}
