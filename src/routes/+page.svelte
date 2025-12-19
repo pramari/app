@@ -3,15 +3,25 @@
 	import { fade, fly } from 'svelte/transition';
 	import { backOut, cubicOut } from 'svelte/easing';
 
-	const API_BASE = '/api/v2/pages'; // Using proxy
+	// Use absolute URL for production, relative for local dev with proxy
+	const API_BASE =
+		typeof window !== 'undefined' && window.location.hostname === 'localhost'
+			? '/api/v2/pages'
+			: 'https://pramari.de/api/v2/pages';
+
 	const ROOT_ID = 79;
 
+	/** @type {any} */
 	let currentPage = null;
+	/** @type {any[]} */
 	let children = [];
+	/** @type {any[]} */
 	let history = [];
 	let loading = true;
+	/** @type {string|null} */
 	let error = null;
 
+	/** @param {any} id */
 	async function fetchPage(id) {
 		loading = true;
 		error = null;
@@ -29,12 +39,13 @@
 			currentPage = pageData;
 			children = childrenData.items || [];
 		} catch (e) {
-			error = e.message;
+			error = e instanceof Error ? e.message : String(e);
 		} finally {
 			loading = false;
 		}
 	}
 
+	/** @param {any} id */
 	async function navigateTo(id) {
 		if (currentPage) {
 			history = [...history, currentPage];
@@ -58,7 +69,7 @@
 <svelte:head>
 	<title>{currentPage ? currentPage.title : 'Wagtail Navigator'}</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 	<link
 		href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap"
 		rel="stylesheet"
