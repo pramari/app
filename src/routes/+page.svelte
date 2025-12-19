@@ -1,257 +1,266 @@
 <script>
-	import { onMount, onDestroy } from 'svelte';
-	import { createClient, IndexedDBStore, IndexedDBCryptoStore } from 'matrix-js-sdk';
-	import { on } from 'svelte/events';
+	import { onMount } from 'svelte';
+	import { fade, fly } from 'svelte/transition';
+	import { backOut, cubicOut } from 'svelte/easing';
 
-	let matrixClient;
-	let currentRoomId;
-	let userId = '';
-	let messages = [];
-	let messageInput = '';
-	let isLoginButtonDisabled = true;
-	let isChatDisabled = true;
+	const API_BASE = '/api/v2/pages'; // Using proxy
+	const ROOT_ID = 79;
 
-	const homeserverUrl = 'https://matrix.pramari.de';
-	const roomAlias = '#sauna:pramari.de';
+	let currentPage = null;
+	let children = [];
+	let history = [];
+	let loading = true;
+	let error = null;
+
+	async function fetchPage(id) {
+		loading = true;
+		error = null;
+		try {
+			// Fetch page details
+			const pageRes = await fetch(`${API_BASE}/${id}/`);
+			if (!pageRes.ok) throw new Error('Failed to fetch page details');
+			const pageData = await pageRes.json();
+
+			// Fetch children
+			const childrenRes = await fetch(`${API_BASE}/?child_of=${id}`);
+			if (!childrenRes.ok) throw new Error('Failed to fetch children');
+			const childrenData = await childrenRes.json();
+
+			currentPage = pageData;
+			children = childrenData.items || [];
+		} catch (e) {
+			error = e.message;
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function navigateTo(id) {
+		if (currentPage) {
+			history = [...history, currentPage];
+		}
+		await fetchPage(id);
+	}
+
+	async function navigateBack() {
+		if (history.length > 0) {
+			const previous = history.pop();
+			history = [...history]; // Trigger reactivity
+			await fetchPage(previous.id);
+		}
+	}
 
 	onMount(() => {
-		handleSsoCallback();
+		fetchPage(ROOT_ID);
 	});
-
-	onDestroy(() => {
-		leaveRoomOnExit();
-	});
-
-	function logToUI(message, isChatMessage = false) {
-		messages = [...messages, { text: message, isChatMessage }];
-		console.log(message);
-	}
-
-	function getBaseRedirectUrl() {
-		return window.location.origin + window.location.pathname;
-	}
-
-	async function initiateSsoLogin() {
-		logToUI('Redirecting for SSO login...');
-		localStorage.setItem('sso_roomAlias', roomAlias);
-
-		const redirectUrl = getBaseRedirectUrl();
-		const ssoRedirectEndpoint =
-			homeserverUrl.replace(/\/$/, '') +
-			'/_matrix/client/v3/login/sso/redirect?redirectUrl=' +
-			encodeURIComponent(redirectUrl);
-
-		window.location.href = ssoRedirectEndpoint;
-	}
-
-	async function handleSsoCallback() {
-		const urlParams = new URLSearchParams(window.location.search);
-		const loginToken = urlParams.get('loginToken');
-		const storedRoomAlias = localStorage.getItem('sso_roomAlias');
-
-		if (loginToken && storedRoomAlias) {
-			logToUI('SSO login token received. Completing login...');
-			const cleanUrl = getBaseRedirectUrl();
-			window.history.replaceState({}, document.title, cleanUrl);
-			localStorage.removeItem('sso_roomAlias');
-
-			await initializeMatrixClient(homeserverUrl, loginToken, storedRoomAlias);
-		} else {
-			logToUI('Ready to login via SSO.');
-			isLoginButtonDisabled = false;
-		}
-	}
-
-	async function initializeMatrixClient(homeserverUrl, loginToken, roomAliasToJoin) {
-		try {
-			logToUI('Creating Matrix client...');
-			matrixClient = createClient({
-				baseUrl: homeserverUrl,
-				store: new IndexedDBStore({ indexedDB: window.indexedDB, dbName: 'matrix-js-sdk' }),
-				cryptoStore: new IndexedDBCryptoStore(window.indexedDB, 'matrix-js-sdk-crypto'),
-				deviceId: 'browser'
-			});
-
-			logToUI('Logging in with SSO token...');
-			const loginResponse = await matrixClient.login('m.login.token', { token: loginToken });
-			userId = loginResponse.user_id;
-			const deviceId = loginResponse.device_id;
-			await matrixClient.initRustCrypto();
-
-			logToUI(`Logged in as ${userId} with deviceId ${deviceId}`);
-
-			matrixClient.on('crypto.verification.request', (request) => {
-				logToUI(
-					`Received verification request from ${request.otherUserId}. In a real app you would now handle this request.`
-				);
-				console.log('Verification request:', request);
-			});
-
-			matrixClient.once('sync', function (state) {
-				if (state === 'PREPARED') {
-					logToUI('Client synced. You can now send/receive messages.');
-					const room = matrixClient.getRoom(currentRoomId);
-					if (room) {
-						room.timeline.forEach((event) => {
-							if (event.getType() === 'm.room.message' && event.getContent().body) {
-								logToUI(`${event.getSender()}: ${event.getContent().body}`, true);
-							}
-						});
-					}
-				} else if (state === 'ERROR') {
-					logToUI('Sync error occurred.');
-				}
-			});
-
-			isLoginButtonDisabled = true;
-			isChatDisabled = false;
-
-			const room = await matrixClient.joinRoom(roomAliasToJoin);
-			currentRoomId = room.roomId;
-
-			logToUI('Matrix client initialized and room joined.');
-
-			await matrixClient.startClient({ initialSyncLimit: 10 });
-
-			matrixClient.on('Room.timeline', (event, room, toStartOfTimeline) => {
-				if (toStartOfTimeline) {
-					return;
-				}
-				if (event.getType() !== 'm.room.message') {
-					return;
-				}
-				if (room.roomId !== currentRoomId) {
-					return;
-				}
-				const sender = event.getSender();
-				const message = event.getContent().body;
-				logToUI(`${sender}: ${message}`, true);
-			});
-		} catch (error) {
-			logToUI(`Error during SSO login or chat setup: ${error.message}`);
-			console.error('SSO Login/Chat Setup Error:', error);
-			isLoginButtonDisabled = false;
-			isChatDisabled = true;
-		}
-	}
-
-	async function leaveRoomOnExit() {
-		if (matrixClient && currentRoomId) {
-			await matrixClient.leave(currentRoomId);
-		}
-	}
-
-	async function clearIndexedDB() {
-		if (typeof window !== 'undefined' && window.indexedDB) {
-			const dbs = await window.indexedDB.databases();
-			for (const db of dbs) {
-				window.indexedDB.deleteDatabase(db.name);
-			}
-			logToUI('IndexedDB cleared.');
-		}
-	}
-
-	async function logout() {
-		if (matrixClient) {
-			await matrixClient.logout();
-			await clearIndexedDB(); // Clears IndexedDB after logout
-			logToUI('Logged out.');
-			isLoginButtonDisabled = false;
-			isChatDisabled = true;
-			window.location.reload();
-		}
-	}
-
-	async function sendMessage() {
-		if (!matrixClient || !currentRoomId) {
-			alert('Client not started or Room not joined.');
-			return;
-		}
-		if (!messageInput.trim()) {
-			return;
-		}
-
-		const content = {
-			body: messageInput,
-			msgtype: 'm.text'
-		};
-
-		try {
-			await matrixClient.sendEvent(currentRoomId, 'm.room.message', content, '');
-			messageInput = '';
-		} catch (error) {
-			logToUI(`Error sending message: ${error.message}`);
-			console.error('Error in sendMessage:', error);
-		}
-	}
 </script>
 
-<nav class="flex items-center justify-between p-4 bg-gray-200">
-	<div class="flex items-center">
-		<label for="userIdInput" class="mr-2 text-gray-700 font-medium">User ID:</label>
-		<input
-			type="text"
-			id="userIdInput"
-			placeholder="Will be filled after SSO"
-			readonly
-			bind:value={userId}
-			class="p-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-		/>
-	</div>
-	<div class="flex space-x-2">
-		<button on:click={initiateSsoLogin} disabled={isLoginButtonDisabled} class="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
-			Login
-		</button>
-		<button on:click={logout} disabled={isChatDisabled} class="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
-			Logout
-		</button>
-	</div>
-</nav>
-
-<hr class="my-4" />
-
-
-<div id="messages">
-	{#each messages as msg}
-		<div class="message">
-			{#if msg.isChatMessage}
-				{@const parts = msg.text.split(/:(.*)/s)}
-				<span class="sender">{parts[0]}:</span>
-				<span class="text">{parts[1] || ''}</span>
-			{:else}
-				{msg.text}
-			{/if}
-		</div>
-	{/each}
-</div>
-<div class="mt-4 flex">
-	<input
-		type="text"
-		class="flex-grow rounded-l-lg border p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-		placeholder="Type a message..."
-		bind:value={messageInput}
-		disabled={isChatDisabled}
-		on:keydown={(e) => e.key === 'Enter' && sendMessage()}
+<svelte:head>
+	<title>{currentPage ? currentPage.title : 'Wagtail Navigator'}</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap"
+		rel="stylesheet"
 	/>
-	<button
-		class="rounded-r-lg bg-blue-500 p-2 text-white hover:bg-blue-600 disabled:bg-gray-400"
-		on:click={sendMessage}
-		disabled={isChatDisabled}>Send</button
-	>
-</div>
+</svelte:head>
+
+<main
+	class="min-h-screen overflow-hidden bg-[#0a0a0c] font-['Outfit'] text-white selection:bg-blue-500/30"
+>
+	<!-- Background blobs -->
+	<div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+		<div
+			class="absolute -left-[10%] -top-[10%] h-[40%] w-[40%] animate-pulse rounded-full bg-blue-600/10 blur-[120px]"
+		></div>
+		<div
+			class="absolute -right-[10%] top-[20%] h-[35%] w-[35%] animate-pulse rounded-full bg-purple-600/10 blur-[120px]"
+			style="animation-delay: -2s"
+		></div>
+		<div
+			class="absolute -bottom-[10%] left-[20%] h-[30%] w-[30%] animate-pulse rounded-full bg-emerald-600/10 blur-[120px]"
+			style="animation-delay: -1s"
+		></div>
+	</div>
+
+	<div class="relative mx-auto max-w-5xl px-6 py-12 lg:py-24">
+		<!-- Header / Navigation -->
+		<header class="mb-12" in:fade={{ duration: 800 }}>
+			<div class="mb-6 flex items-center gap-4">
+				{#if history.length > 0}
+					<button
+						on:click={navigateBack}
+						class="group flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 transition-all duration-300 hover:border-white/20 hover:bg-white/10"
+						aria-label="Go back"
+					>
+						<svg
+							class="h-5 w-5 text-white/50 transition-all group-hover:-translate-x-1 group-hover:text-white"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M15 19l-7-7 7-7"
+							/>
+						</svg>
+					</button>
+				{/if}
+				<div class="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent"></div>
+			</div>
+
+			{#if currentPage}
+				{#key currentPage.id}
+					<div in:fly={{ y: 20, duration: 600, easing: cubicOut }}>
+						<h1
+							class="mb-4 bg-gradient-to-br from-white via-white to-white/40 bg-clip-text text-5xl font-semibold tracking-tight text-transparent lg:text-7xl"
+						>
+							{currentPage.title}
+						</h1>
+						{#if currentPage.meta && currentPage.meta.search_description}
+							<p class="max-w-2xl text-lg font-light leading-relaxed text-white/60 lg:text-xl">
+								{currentPage.meta.search_description}
+							</p>
+						{/if}
+					</div>
+				{/key}
+			{/if}
+		</header>
+
+		<!-- Content -->
+		{#if loading && !currentPage}
+			<div class="flex flex-col items-center justify-center gap-4 py-20" in:fade>
+				<div
+					class="h-12 w-12 animate-spin rounded-full border-2 border-white/10 border-t-white/80"
+				></div>
+				<p class="animate-pulse text-sm uppercase tracking-widest text-white/40">
+					Bridging connections...
+				</p>
+			</div>
+		{:else if error}
+			<div class="rounded-3xl border border-red-500/20 bg-red-500/5 p-8 text-red-400">
+				<p class="mb-2 text-lg font-medium">Something went wrong</p>
+				<p class="opacity-70">{error}</p>
+				<button
+					on:click={() => fetchPage(currentPage ? currentPage.id : ROOT_ID)}
+					class="mt-4 rounded-xl bg-red-500/10 px-6 py-2 transition-colors hover:bg-red-500/20"
+				>
+					Try Again
+				</button>
+			</div>
+		{:else}
+			<div class="grid grid-cols-1 gap-6 md:grid-cols-2" in:fade={{ duration: 400, delay: 200 }}>
+				{#each children as child (child.id)}
+					<button
+						on:click={() => navigateTo(child.id)}
+						class="group relative block w-full overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.03] p-8 text-left transition-all duration-500 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.06]"
+					>
+						<!-- Hover highlight -->
+						<div
+							class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100"
+						></div>
+
+						<div class="relative z-10">
+							<div class="mb-4 flex items-start justify-between">
+								<div
+									class="rounded-2xl border border-white/5 bg-white/5 p-3 transition-colors group-hover:border-white/10"
+								>
+									<svg
+										class="h-6 w-6 text-white/40 transition-colors group-hover:text-white/90"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+										/>
+									</svg>
+								</div>
+								<div
+									class="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100"
+								>
+									<svg
+										class="h-4 w-4 text-white"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M9 5l7 7-7 7"
+										/>
+									</svg>
+								</div>
+							</div>
+
+							<h3 class="mb-2 text-2xl font-medium transition-colors group-hover:text-white">
+								{child.title}
+							</h3>
+							<p class="text-sm font-light uppercase tracking-widest text-white/40">
+								{child.meta.type.split('.').pop()}
+							</p>
+						</div>
+					</button>
+				{/each}
+
+				{#if children.length === 0 && !loading && currentPage}
+					<div
+						class="col-span-full rounded-[40px] border-2 border-dashed border-white/5 py-20 text-center"
+						in:fade
+					>
+						<div
+							class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-white/5"
+						>
+							<svg
+								class="h-8 w-8 text-white/20"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+								/>
+							</svg>
+						</div>
+						<h3 class="mb-2 text-xl text-white/60">No deeper paths found</h3>
+						<p class="font-light text-white/30">
+							This page is a final destination in the current journey.
+						</p>
+					</div>
+				{/if}
+			</div>
+		{/if}
+	</div>
+</main>
 
 <style>
-	#messages {
-		border: 1px solid #ccc;
-		padding: 10px;
-		height: 300px;
-		overflow-y: scroll;
-		margin-bottom: 10px;
+	:global(body) {
+		margin: 0;
+		background: #0a0a0c;
+		overflow-x: hidden;
 	}
-	.message {
-		margin-bottom: 5px;
+
+	.animate-pulse {
+		animation: pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 	}
-	.message .sender {
-		font-weight: bold;
+
+	@keyframes pulse {
+		0%,
+		100% {
+			opacity: 0.1;
+		}
+		50% {
+			opacity: 0.2;
+		}
 	}
 </style>
