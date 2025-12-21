@@ -31,8 +31,8 @@
 			if (!pageRes.ok) throw new Error('Failed to fetch page details');
 			const pageData = await pageRes.json();
 
-			// Fetch children
-			const childrenRes = await fetch(`${API_BASE}/?child_of=${id}`);
+			// Fetch children with all fields
+			const childrenRes = await fetch(`${API_BASE}/?child_of=${id}&fields=*`);
 			if (!childrenRes.ok) throw new Error('Failed to fetch children');
 			const childrenData = await childrenRes.json();
 
@@ -51,6 +51,13 @@
 			history = [...history, currentPage];
 		}
 		await fetchPage(id);
+	}
+
+	/** @param {number} index */
+	async function navigateToBreadcrumb(index) {
+		const targetPage = history[index];
+		history = history.slice(0, index);
+		await fetchPage(targetPage.id);
 	}
 
 	async function navigateBack() {
@@ -99,6 +106,38 @@
 	<div class="relative mx-auto max-w-5xl px-6 py-12 lg:py-24">
 		<!-- Header / Navigation -->
 		<header class="mb-12" in:fade={{ duration: 800 }}>
+			<!-- Breadcrumbs -->
+			<nav
+				class="mb-8 flex flex-wrap items-center gap-2 text-sm font-light text-[var(--text-muted)]"
+			>
+				<button
+					on:click={() => {
+						history = [];
+						fetchPage(ROOT_ID);
+					}}
+					class="transition-colors hover:text-[var(--text-main)]"
+				>
+					Home
+				</button>
+
+				{#each history as step, i}
+					{#if step.id !== ROOT_ID}
+						<span class="opacity-30">/</span>
+						<button
+							on:click={() => navigateToBreadcrumb(i)}
+							class="transition-colors hover:text-[var(--text-main)]"
+						>
+							{step.title}
+						</button>
+					{/if}
+				{/each}
+
+				{#if currentPage && currentPage.id !== ROOT_ID}
+					<span class="opacity-30">/</span>
+					<span class="font-medium text-[var(--text-main)]">{currentPage.title}</span>
+				{/if}
+			</nav>
+
 			<div class="mb-6 flex items-center gap-4">
 				{#if history.length > 0}
 					<button
@@ -132,7 +171,23 @@
 						>
 							{currentPage.title}
 						</h1>
-						{#if currentPage.meta && currentPage.meta.search_description}
+
+						{#if currentPage.meta?.type === 'pages.HomePage'}
+							{#if currentPage.intro}
+								<div
+									class="prose-luxury mb-8 max-w-2xl text-xl font-light leading-relaxed text-[var(--text-muted)] lg:text-2xl"
+								>
+									{@html currentPage.intro}
+								</div>
+							{/if}
+							{#if currentPage.body}
+								<div
+									class="prose-luxury text-[var(--text-main)]/80 mb-12 max-w-3xl text-lg font-light leading-relaxed"
+								>
+									{@html currentPage.body}
+								</div>
+							{/if}
+						{:else if currentPage.meta?.search_description}
 							<p
 								class="max-w-2xl text-lg font-light leading-relaxed text-[var(--text-muted)] lg:text-xl"
 							>
@@ -165,7 +220,7 @@
 					Try Again
 				</button>
 			</div>
-		{:else}
+		{:else if children.length > 0}
 			<div class="grid grid-cols-1 gap-6 md:grid-cols-2" in:fade={{ duration: 400, delay: 200 }}>
 				{#each children as child (child.id)}
 					<button
@@ -215,28 +270,45 @@
 								</div>
 							</div>
 
-							<h3
-								class="mb-2 text-2xl font-medium transition-colors group-hover:text-[var(--text-main)]"
+							{#if child.card_title}
+								<div
+									class="mb-2 text-2xl font-medium transition-colors group-hover:text-[var(--text-main)]"
+								>
+									{@html child.card_title}
+								</div>
+							{:else}
+								<h3
+									class="mb-2 text-2xl font-medium transition-colors group-hover:text-[var(--text-main)]"
+								>
+									{child.title}
+								</h3>
+							{/if}
+
+							{#if child.card_subtitle}
+								<div class="mb-2 text-sm font-light leading-relaxed text-[var(--text-muted)]">
+									{@html child.card_subtitle}
+								</div>
+							{/if}
+
+							<p
+								class="text-xs font-light uppercase tracking-widest text-[var(--text-muted)] opacity-60"
 							>
-								{child.title}
-							</h3>
-							<p class="text-sm font-light uppercase tracking-widest text-[var(--text-muted)]">
 								{child.meta.type.split('.').pop()}
 							</p>
 						</div>
 					</button>
 				{/each}
-
-				{#if children.length === 0 && !loading && currentPage}
-					<div
-						class="col-span-full rounded-[40px] border-2 border-dashed border-[var(--nav-border)] py-20 text-center"
-						in:fade
+			</div>
+		{:else if !loading && currentPage}
+			{#if history.length > 0}
+				<div class="flex justify-center py-12" in:fade>
+					<button
+						on:click={navigateBack}
+						class="group flex items-center gap-3 rounded-full border border-[var(--nav-border)] bg-[var(--card-bg)] px-8 py-4 transition-all duration-300 hover:-translate-y-1 hover:border-[var(--nav-border)] hover:bg-[var(--card-hover-bg)]"
 					>
-						<div
-							class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--card-bg)]"
-						>
+						<div class="rounded-full bg-[var(--bg-main)] p-2 transition-colors">
 							<svg
-								class="h-8 w-8 text-[var(--text-muted)]"
+								class="h-5 w-5 text-[var(--text-main)] transition-transform group-hover:-translate-y-1"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -245,17 +317,16 @@
 									stroke-linecap="round"
 									stroke-linejoin="round"
 									stroke-width="2"
-									d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+									d="M5 10l7-7m0 0l7 7m-7-7v18"
 								/>
 							</svg>
 						</div>
-						<h3 class="mb-2 text-xl text-[var(--text-muted)]">No deeper paths found</h3>
-						<p class="font-light text-[var(--text-muted)] opacity-60">
-							This page is a final destination in the current journey.
-						</p>
-					</div>
-				{/if}
-			</div>
+						<span class="text-lg font-medium">Return Up</span>
+					</button>
+				</div>
+			{:else}
+				<div class="h-px bg-gradient-to-r from-[var(--nav-border)] to-transparent opacity-50"></div>
+			{/if}
 		{/if}
 	</div>
 </main>
@@ -278,5 +349,24 @@
 		50% {
 			opacity: 0.2;
 		}
+	}
+
+	.prose-luxury :global(p) {
+		margin-bottom: 1.5rem;
+	}
+
+	.prose-luxury :global(p:last-child) {
+		margin-bottom: 0;
+	}
+
+	.prose-luxury :global(a) {
+		color: #3b82f6;
+		text-decoration: underline;
+		text-underline-offset: 4px;
+		transition: opacity 0.2s;
+	}
+
+	.prose-luxury :global(a:hover) {
+		opacity: 0.8;
 	}
 </style>
