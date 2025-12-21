@@ -186,55 +186,66 @@
 	}
 </script>
 
-<nav class="flex items-center justify-between p-4 bg-gray-200">
+<nav
+	class="mb-6 flex items-center justify-between rounded-2xl border border-[var(--nav-border)] bg-[var(--card-bg)] p-4"
+>
 	<div class="flex items-center">
-		<label for="userIdInput" class="mr-2 text-gray-700 font-medium">User ID:</label>
+		<label for="userIdInput" class="mr-2 font-medium text-[var(--text-muted)]">User ID:</label>
 		<input
 			type="text"
 			id="userIdInput"
 			placeholder="Will be filled after SSO"
 			readonly
 			bind:value={userId}
-			class="p-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+			class="rounded-md border border-[var(--nav-border)] bg-[var(--bg-main)] p-1 px-3 text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-blue-500"
 		/>
 	</div>
 	<div class="flex space-x-2">
-		<button on:click={initiateSsoLogin} disabled={isLoginButtonDisabled} class="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+		<button
+			on:click={initiateSsoLogin}
+			disabled={isLoginButtonDisabled}
+			class="rounded-xl bg-blue-600 px-4 py-2 text-white transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400/20 disabled:text-gray-500"
+		>
 			Login
 		</button>
-		<button on:click={logout} disabled={isChatDisabled} class="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+		<button
+			on:click={logout}
+			disabled={isChatDisabled}
+			class="rounded-xl bg-red-600/80 px-4 py-2 text-white transition-all hover:bg-red-600 disabled:cursor-not-allowed disabled:bg-gray-400/20 disabled:text-gray-500"
+		>
 			Logout
 		</button>
 	</div>
 </nav>
 
-<hr class="my-4" />
-
-
-<div id="messages">
+<div
+	id="messages"
+	class="custom-scrollbar rounded-3xl border border-[var(--nav-border)] bg-[var(--card-bg)]"
+>
 	{#each messages as msg}
-		<div class="message">
+		<div class="message {msg.isChatMessage ? 'chat-msg' : 'system-msg'}">
 			{#if msg.isChatMessage}
 				{@const parts = msg.text.split(/:(.*)/s)}
-				<span class="sender">{parts[0]}:</span>
+				<span class="sender">{parts[0]}</span>
 				<span class="text">{parts[1] || ''}</span>
 			{:else}
-				{msg.text}
+				<span class="system-text">{msg.text}</span>
 			{/if}
 		</div>
 	{/each}
 </div>
-<div class="mt-4 flex">
+
+<div class="mt-6 flex gap-3">
 	<input
 		type="text"
-		class="flex-grow rounded-l-lg border p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+		class="flex-grow rounded-2xl border border-[var(--nav-border)] bg-[var(--card-bg)] p-4 text-[var(--text-main)] transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
 		placeholder="Type a message..."
 		bind:value={messageInput}
 		disabled={isChatDisabled}
 		on:keydown={(e) => e.key === 'Enter' && sendMessage()}
 	/>
 	<button
-		class="rounded-r-lg bg-blue-500 p-2 text-white hover:bg-blue-600 disabled:bg-gray-400"
+		class="rounded-2xl bg-blue-600 p-4 px-8 font-medium text-white transition-all hover:bg-blue-700 disabled:bg-gray-400/20 disabled:text-gray-500"
 		on:click={sendMessage}
 		disabled={isChatDisabled}>Send</button
 	>
@@ -242,16 +253,60 @@
 
 <style>
 	#messages {
-		border: 1px solid #ccc;
-		padding: 10px;
-		height: 300px;
-		overflow-y: scroll;
-		margin-bottom: 10px;
+		padding: 1.5rem;
+		height: 450px;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
 	}
+
+	.custom-scrollbar::-webkit-scrollbar {
+		width: 6px;
+	}
+	.custom-scrollbar::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	.custom-scrollbar::-webkit-scrollbar-thumb {
+		background: var(--nav-border);
+		border-radius: 10px;
+	}
+
 	.message {
-		margin-bottom: 5px;
+		max-width: 85%;
+		padding: 0.75rem 1.25rem;
+		border-radius: 1.25rem;
+		font-size: 0.95rem;
+		line-height: 1.5;
 	}
-	.message .sender {
-		font-weight: bold;
+
+	.chat-msg {
+		background: var(--card-hover-bg);
+		align-self: flex-start;
+		border-bottom-left-radius: 0.25rem;
+	}
+
+	.system-msg {
+		background: transparent;
+		align-self: center;
+		text-align: center;
+		font-style: italic;
+		color: var(--text-muted);
+		font-size: 0.85rem;
+		padding: 0.25rem;
+	}
+
+	.sender {
+		display: block;
+		font-weight: 600;
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--text-muted);
+		margin-bottom: 0.25rem;
+	}
+
+	.text {
+		color: var(--text-main);
 	}
 </style>

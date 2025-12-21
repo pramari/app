@@ -77,10 +77,12 @@
 </svelte:head>
 
 <main
-	class="min-h-screen overflow-hidden bg-[#0a0a0c] font-['Outfit'] text-white selection:bg-blue-500/30"
+	class="min-h-screen overflow-hidden bg-[var(--bg-main)] font-['Outfit'] text-[var(--text-main)] transition-colors duration-300 selection:bg-blue-500/30"
 >
 	<!-- Background blobs -->
-	<div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+	<div
+		class="pointer-events-none fixed inset-0 -z-10 overflow-hidden opacity-[var(--blob-opacity)]"
+	>
 		<div
 			class="absolute -left-[10%] -top-[10%] h-[40%] w-[40%] animate-pulse rounded-full bg-blue-600/10 blur-[120px]"
 		></div>
@@ -101,11 +103,11 @@
 				{#if history.length > 0}
 					<button
 						on:click={navigateBack}
-						class="group flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 transition-all duration-300 hover:border-white/20 hover:bg-white/10"
+						class="group flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--nav-border)] bg-[var(--card-bg)] transition-all duration-300 hover:border-[var(--nav-border)] hover:bg-[var(--card-hover-bg)]"
 						aria-label="Go back"
 					>
 						<svg
-							class="h-5 w-5 text-white/50 transition-all group-hover:-translate-x-1 group-hover:text-white"
+							class="h-5 w-5 text-[var(--text-muted)] transition-all group-hover:-translate-x-1 group-hover:text-[var(--text-main)]"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
@@ -119,19 +121,21 @@
 						</svg>
 					</button>
 				{/if}
-				<div class="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent"></div>
+				<div class="h-px flex-1 bg-gradient-to-r from-[var(--nav-border)] to-transparent"></div>
 			</div>
 
 			{#if currentPage}
 				{#key currentPage.id}
 					<div in:fly={{ y: 20, duration: 600, easing: cubicOut }}>
 						<h1
-							class="mb-4 bg-gradient-to-br from-white via-white to-white/40 bg-clip-text text-5xl font-semibold tracking-tight text-transparent lg:text-7xl"
+							class="mb-4 bg-gradient-to-br from-[var(--text-main)] via-[var(--text-main)] to-[var(--text-muted)] bg-clip-text text-5xl font-semibold tracking-tight text-transparent lg:text-7xl"
 						>
 							{currentPage.title}
 						</h1>
 						{#if currentPage.meta && currentPage.meta.search_description}
-							<p class="max-w-2xl text-lg font-light leading-relaxed text-white/60 lg:text-xl">
+							<p
+								class="max-w-2xl text-lg font-light leading-relaxed text-[var(--text-muted)] lg:text-xl"
+							>
 								{currentPage.meta.search_description}
 							</p>
 						{/if}
@@ -144,9 +148,9 @@
 		{#if loading && !currentPage}
 			<div class="flex flex-col items-center justify-center gap-4 py-20" in:fade>
 				<div
-					class="h-12 w-12 animate-spin rounded-full border-2 border-white/10 border-t-white/80"
+					class="h-12 w-12 animate-spin rounded-full border-2 border-[var(--nav-border)] border-t-[var(--text-main)]"
 				></div>
-				<p class="animate-pulse text-sm uppercase tracking-widest text-white/40">
+				<p class="animate-pulse text-sm uppercase tracking-widest text-[var(--text-muted)]">
 					Bridging connections...
 				</p>
 			</div>
@@ -166,20 +170,20 @@
 				{#each children as child (child.id)}
 					<button
 						on:click={() => navigateTo(child.id)}
-						class="group relative block w-full overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.03] p-8 text-left transition-all duration-500 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.06]"
+						class="group relative block w-full overflow-hidden rounded-[32px] border border-[var(--nav-border)] bg-[var(--card-bg)] p-8 text-left transition-all duration-500 hover:-translate-y-1 hover:border-[var(--nav-border)] hover:bg-[var(--card-hover-bg)]"
 					>
 						<!-- Hover highlight -->
 						<div
-							class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100"
+							class="absolute inset-0 bg-gradient-to-br from-[var(--text-main)] to-transparent opacity-0 transition-opacity group-hover:opacity-[0.03]"
 						></div>
 
 						<div class="relative z-10">
 							<div class="mb-4 flex items-start justify-between">
 								<div
-									class="rounded-2xl border border-white/5 bg-white/5 p-3 transition-colors group-hover:border-white/10"
+									class="rounded-2xl border border-[var(--nav-border)] bg-[var(--card-bg)] p-3 transition-colors group-hover:border-[var(--nav-border)]"
 								>
 									<svg
-										class="h-6 w-6 text-white/40 transition-colors group-hover:text-white/90"
+										class="h-6 w-6 text-[var(--text-muted)] transition-colors group-hover:text-[var(--text-main)]"
 										fill="none"
 										stroke="currentColor"
 										viewBox="0 0 24 24"
@@ -193,10 +197,10 @@
 									</svg>
 								</div>
 								<div
-									class="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100"
+									class="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--card-bg)] opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100"
 								>
 									<svg
-										class="h-4 w-4 text-white"
+										class="h-4 w-4 text-[var(--text-main)]"
 										fill="none"
 										stroke="currentColor"
 										viewBox="0 0 24 24"
@@ -211,10 +215,12 @@
 								</div>
 							</div>
 
-							<h3 class="mb-2 text-2xl font-medium transition-colors group-hover:text-white">
+							<h3
+								class="mb-2 text-2xl font-medium transition-colors group-hover:text-[var(--text-main)]"
+							>
 								{child.title}
 							</h3>
-							<p class="text-sm font-light uppercase tracking-widest text-white/40">
+							<p class="text-sm font-light uppercase tracking-widest text-[var(--text-muted)]">
 								{child.meta.type.split('.').pop()}
 							</p>
 						</div>
@@ -223,14 +229,14 @@
 
 				{#if children.length === 0 && !loading && currentPage}
 					<div
-						class="col-span-full rounded-[40px] border-2 border-dashed border-white/5 py-20 text-center"
+						class="col-span-full rounded-[40px] border-2 border-dashed border-[var(--nav-border)] py-20 text-center"
 						in:fade
 					>
 						<div
-							class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-white/5"
+							class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--card-bg)]"
 						>
 							<svg
-								class="h-8 w-8 text-white/20"
+								class="h-8 w-8 text-[var(--text-muted)]"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -243,8 +249,8 @@
 								/>
 							</svg>
 						</div>
-						<h3 class="mb-2 text-xl text-white/60">No deeper paths found</h3>
-						<p class="font-light text-white/30">
+						<h3 class="mb-2 text-xl text-[var(--text-muted)]">No deeper paths found</h3>
+						<p class="font-light text-[var(--text-muted)] opacity-60">
 							This page is a final destination in the current journey.
 						</p>
 					</div>
@@ -257,7 +263,6 @@
 <style>
 	:global(body) {
 		margin: 0;
-		background: #0a0a0c;
 		overflow-x: hidden;
 	}
 
