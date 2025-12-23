@@ -7,12 +7,14 @@ import type { OAuthConfig, OAuthUserConfig } from '@auth/core/providers';
 
 import type { Provider } from '@auth/core/providers';
 import type { Session, User } from '@auth/core/types';
-import {
-	PRAMARI_CLIENT_ID,
-	PRAMARI_CLIENT_SECRET,
-	OIDC_ISSUER,
-	AUTH_SECRET
-} from '$env/static/private';
+import { env } from '$env/dynamic/private';
+
+const { PRAMARI_CLIENT_ID, PRAMARI_CLIENT_SECRET, OIDC_ISSUER, AUTH_SECRET } = env;
+
+if (!PRAMARI_CLIENT_ID) console.error('❌ PRAMARI_CLIENT_ID is missing');
+if (!PRAMARI_CLIENT_SECRET) console.error('❌ PRAMARI_CLIENT_SECRET is missing');
+if (!OIDC_ISSUER) console.error('❌ OIDC_ISSUER is missing');
+if (!AUTH_SECRET) console.error('❌ AUTH_SECRET is missing');
 import Resend from '@auth/core/providers/resend';
 
 // Optional: Define custom session type if you extend the default session
@@ -33,13 +35,20 @@ interface OIDCProviderConfig extends OAuthUserConfig<any> {
 
 // Define OIDC provider function
 function OIDCProvider(options: OIDCProviderConfig): OAuthConfig<any> {
+	console.log('--- OIDC CONFIG ---');
+	console.log('Env OIDC_ISSUER:', options.issuer);
+	const wellKnownUrl = `${options.issuer}/o/.well-known/openid-configuration`;
+	console.log('Constructed wellKnown:', wellKnownUrl);
+	console.log('-------------------');
+
 	return {
+		...options,
 		id: 'pramari.de',
 		name: 'pramari',
 		type: 'oauth',
-		wellKnown: `${options.issuer}/o/.well-known/openid-configuration`,
+		wellKnown: wellKnownUrl,
 		authorization: { params: { scope: 'openid email userinfo' } },
-		issuer: 'https://pramari.de/o',
+		// issuer: 'https://pramari.de',
 		idToken: true,
 		checks: ['pkce', 'state'],
 		userinfo: async (token) => {
@@ -67,8 +76,7 @@ function OIDCProvider(options: OIDCProviderConfig): OAuthConfig<any> {
 			// logoDark: "/company-logo-dark.png",
 			bg: '#0F172A',
 			text: '#FFFFFF'
-		},
-		options
+		}
 	};
 }
 

@@ -2,6 +2,43 @@
 	import { onMount } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { backOut, cubicOut } from 'svelte/easing';
+	import {
+		FileText,
+		Files,
+		Settings,
+		User,
+		Calendar,
+		Clock,
+		ArrowUp,
+		ChevronRight,
+		ChevronLeft,
+		CornerLeftUp,
+		Sparkles,
+		Home,
+		Search,
+		Briefcase,
+		Shield,
+		Mail,
+		Scale
+	} from 'lucide-svelte';
+
+	/** @type {Record<string, any>} */
+	const iconMap = {
+		files: Files,
+		'doc-full': FileText,
+		user: User,
+		cogs: Settings,
+		date: Calendar,
+		time: Clock,
+		placeholder: Sparkles,
+		form: Mail,
+		home: Home,
+		search: Search,
+		// Fallbacks/Extras
+		snippet: FileText,
+		folder: Files,
+		site: Home
+	};
 
 	// Use absolute URL for production, relative for local dev with proxy
 	const API_BASE =
@@ -31,13 +68,34 @@
 			if (!pageRes.ok) throw new Error('Failed to fetch page details');
 			const pageData = await pageRes.json();
 
-			// Fetch children with all fields
-			const childrenRes = await fetch(`${API_BASE}/?child_of=${id}&fields=*`);
+			// Fetch children
+			const childrenRes = await fetch(`${API_BASE}/?child_of=${id}`);
 			if (!childrenRes.ok) throw new Error('Failed to fetch children');
 			const childrenData = await childrenRes.json();
 
+			// Fetch full details for each child to get custom fields
+			const detailedChildren = await Promise.all(
+				(childrenData.items || []).map(async (/** @type {any} */ child) => {
+					try {
+						const res = await fetch(`${API_BASE}/${child.id}/`);
+						return res.ok ? await res.json() : child;
+					} catch (e) {
+						console.error(`Failed to fetch details for child ${child.id}`, e);
+						return child;
+					}
+				})
+			);
+
 			currentPage = pageData;
-			children = childrenData.items || [];
+			// Filter and sort children
+			children = detailedChildren
+				.filter((child) => child.show_card !== false)
+				.sort((a, b) => {
+					// Frontpage items first
+					if (a.frontpage && !b.frontpage) return -1;
+					if (!a.frontpage && b.frontpage) return 1;
+					return 0;
+				});
 		} catch (e) {
 			error = e instanceof Error ? e.message : String(e);
 		} finally {
@@ -66,6 +124,16 @@
 			history = [...history]; // Trigger reactivity
 			await fetchPage(previous.id);
 		}
+	}
+
+	/** @param {string} dateStr */
+	function formatDate(dateStr) {
+		if (!dateStr) return '';
+		return new Date(dateStr).toLocaleDateString(undefined, {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric'
+		});
 	}
 
 	onMount(() => {
@@ -223,6 +291,7 @@
 		{:else if children.length > 0}
 			<div class="grid grid-cols-1 gap-6 md:grid-cols-2" in:fade={{ duration: 400, delay: 200 }}>
 				{#each children as child (child.id)}
+					{@const Icon = iconMap[child.icon] || FileText}
 					<button
 						on:click={() => navigateTo(child.id)}
 						class="group relative block w-full overflow-hidden rounded-[32px] border border-[var(--nav-border)] bg-[var(--card-bg)] p-8 text-left transition-all duration-500 hover:-translate-y-1 hover:border-[var(--nav-border)] hover:bg-[var(--card-hover-bg)]"
@@ -237,64 +306,62 @@
 								<div
 									class="rounded-2xl border border-[var(--nav-border)] bg-[var(--card-bg)] p-3 transition-colors group-hover:border-[var(--nav-border)]"
 								>
-									<svg
+									<Icon
 										class="h-6 w-6 text-[var(--text-muted)] transition-colors group-hover:text-[var(--text-main)]"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-										/>
-									</svg>
+									/>
 								</div>
 								<div
 									class="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--card-bg)] opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100"
 								>
-									<svg
-										class="h-4 w-4 text-[var(--text-main)]"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M9 5l7 7-7 7"
-										/>
-									</svg>
+									<ChevronRight class="h-4 w-4 text-[var(--text-main)]" />
 								</div>
 							</div>
 
-							{#if child.card_title}
-								<div
-									class="mb-2 text-2xl font-medium transition-colors group-hover:text-[var(--text-main)]"
-								>
-									{@html child.card_title}
-								</div>
-							{:else}
-								<h3
-									class="mb-2 text-2xl font-medium transition-colors group-hover:text-[var(--text-main)]"
-								>
-									{child.title}
-								</h3>
-							{/if}
+							<div class="mb-2 flex items-center gap-3">
+								{#if child.card_title}
+									<div
+										class="text-2xl font-medium transition-colors group-hover:text-[var(--text-main)]"
+									>
+										{@html child.card_title}
+									</div>
+								{:else}
+									<h3
+										class="text-2xl font-medium transition-colors group-hover:text-[var(--text-main)]"
+									>
+										{child.title}
+									</h3>
+								{/if}
+
+								{#if child.frontpage}
+									<span
+										class="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-blue-400"
+									>
+										Featured
+									</span>
+								{/if}
+							</div>
 
 							{#if child.card_subtitle}
-								<div class="mb-2 text-sm font-light leading-relaxed text-[var(--text-muted)]">
+								<div class="mb-3 text-sm font-light leading-relaxed text-[var(--text-muted)]">
 									{@html child.card_subtitle}
 								</div>
 							{/if}
 
-							<p
-								class="text-xs font-light uppercase tracking-widest text-[var(--text-muted)] opacity-60"
+							<div
+								class="flex items-center gap-3 text-xs font-light text-[var(--text-muted)] opacity-60"
 							>
-								{child.meta.type.split('.').pop()}
-							</p>
+								<p class="uppercase tracking-widest">
+									{child.meta.type.split('.').pop()}
+								</p>
+								{#if child.date || child.meta.first_published_at}
+									<span>•</span>
+									<time>{formatDate(child.date || child.meta.first_published_at)}</time>
+								{/if}
+								{#if child.author}
+									<span>•</span>
+									<span>{child.author}</span>
+								{/if}
+							</div>
 						</div>
 					</button>
 				{/each}
@@ -307,19 +374,9 @@
 						class="group flex items-center gap-3 rounded-full border border-[var(--nav-border)] bg-[var(--card-bg)] px-8 py-4 transition-all duration-300 hover:-translate-y-1 hover:border-[var(--nav-border)] hover:bg-[var(--card-hover-bg)]"
 					>
 						<div class="rounded-full bg-[var(--bg-main)] p-2 transition-colors">
-							<svg
+							<CornerLeftUp
 								class="h-5 w-5 text-[var(--text-main)] transition-transform group-hover:-translate-y-1"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M5 10l7-7m0 0l7 7m-7-7v18"
-								/>
-							</svg>
+							/>
 						</div>
 						<span class="text-lg font-medium">Return Up</span>
 					</button>
