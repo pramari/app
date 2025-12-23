@@ -41,15 +41,16 @@ images:
   - 'gcr.io/$PROJECT_ID/${_SERVICE}:${COMMIT_SHA}'
 
 steps:
-  # Run tests before building. Uses Node image to install deps and run your test suite.
-  - name: 'node:20'
+  # Run tests before building. Uses Node 22 image to install deps and run your test suite.
+  # matrix-js-sdk requires Node >= 22, so use node:22 here.
+  - name: 'node:22'
     id: 'Run tests'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
         set -euo pipefail
-        echo "Running tests..."
+        echo "Running tests with Node 22..."
         npm ci
         npm test
 
