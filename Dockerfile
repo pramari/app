@@ -6,7 +6,7 @@
 ########################################
 # Build stage
 ########################################
-FROM node:20-bullseye-slim AS build
+FROM node:22-bullseye-slim AS build
 
 # Create app directory
 WORKDIR /app
@@ -23,10 +23,14 @@ COPY . .
 # Run the SvelteKit build (adapter-node should emit a runnable build/ directory)
 RUN npm run build
 
+# Remove devDependencies after build so the node_modules can be copied to the production image.
+# This prunes out dev-only packages but keeps production dependencies required at runtime.
+RUN npm prune --production
+
 ########################################
 # Production stage
 ########################################
-FROM node:20-bullseye-slim AS production
+FROM node:22-bullseye-slim AS production
 
 WORKDIR /app
 
@@ -34,11 +38,12 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8080
 
-# Copy only package manifests to install production deps
+# Copy only package manifests (kept for metadata) and copy pruned production node_modules from the build stage.
+# We avoid running npm in the production stage to make the image smaller and deterministic.
 COPY package.json package-lock.json* ./
 
-# Install production dependencies only
-RUN npm ci --omit=dev --production
+# Copy production node_modules prepared in the build stage
+COPY --from=build /app/node_modules ./node_modules
 
 # Copy build output from build stage
 COPY --from=build /app/build ./build
