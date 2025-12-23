@@ -1,0 +1,39 @@
+# Docker ignore for SvelteKit app (Cloud Run build)
+# Exclude local deps, build artifacts, and sensitive files from the build context
+
+node_modules
+.svelte-kit
+build
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Local env and secret files - do NOT include service account JSONs or env files in the image build context
+.env
+.env.*
+pramari-de-firebase-adminsdk-*.json
+*.key
+*.pem
+*.secret
+secrets/**
+secret-*.json
+
+# Logs, caches, and test artifacts
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+coverage
+.vitest
+.cache
+dist
+tmp
+*.log
+
+# Git and other VCS metadata
+.git
+.gitignore
+
+# Misc
+firebase-debug.log
+firebase-debug.*
