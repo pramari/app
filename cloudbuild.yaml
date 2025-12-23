@@ -29,9 +29,12 @@ substitutions:
   # Default values; override when triggering the build if needed.
   _SERVICE: 'sveltekit-app'
   _REGION: 'us-central1'
-  # Optional: attach this service account to the Cloud Run service during deploy.
-  # If left empty, no explicit service-account flag will be passed and the default will be used.
   _SERVICE_ACCOUNT: ''
+
+# Set logging option required when a build.service_account is specified.
+# Cloud Build requires either a logs bucket or one of the logging options when a custom service account is used.
+options:
+  logging: CLOUD_LOGGING_ONLY
 
 # Ensure the built image is registered as an output artifact so Cloud Build will push it.
 images:
