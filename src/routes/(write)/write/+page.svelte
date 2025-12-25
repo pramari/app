@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { PageData, ActionData } from './$types';
+	import WriteNav from '$lib/components/WriteNav.svelte';
 
 	export let data: PageData;
 	export let form: ActionData;
@@ -22,6 +23,7 @@
 					Write Something New
 				</h1>
 				<p class="mt-2 text-slate-400">Welcome back, {data.user?.name || 'Writer'}</p>
+				<WriteNav />
 			</div>
 			<div class="hidden md:block">
 				{#if data.user?.image}

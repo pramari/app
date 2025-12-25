@@ -42,6 +42,11 @@
 				Chat
 			</a>
 			<div class="nav-divider"></div>
+			<a href="/write" class="nav-link">
+				<span class="nav-icon">✎</span>
+				Write
+			</a>
+			<div class="nav-divider"></div>
 			<button class="theme-toggle" onclick={toggleTheme} aria-label="Toggle theme">
 				{#if theme === 'dark'}
 					<span class="nav-icon">☼</span>
