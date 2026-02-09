@@ -15,6 +15,13 @@ if (!PRAMARI_CLIENT_ID) console.error('❌ PRAMARI_CLIENT_ID is missing');
 if (!PRAMARI_CLIENT_SECRET) console.error('❌ PRAMARI_CLIENT_SECRET is missing');
 if (!OIDC_ISSUER) console.error('❌ OIDC_ISSUER is missing');
 if (!AUTH_SECRET) console.error('❌ AUTH_SECRET is missing');
+
+if (!PRAMARI_CLIENT_ID || !PRAMARI_CLIENT_SECRET || !OIDC_ISSUER || !AUTH_SECRET) {
+	throw new Error(
+		'Missing required environment variables for authentication. Please check PRAMARI_CLIENT_ID, PRAMARI_CLIENT_SECRET, OIDC_ISSUER, and AUTH_SECRET.'
+	);
+}
+
 import Resend from '@auth/core/providers/resend';
 
 // Optional: Define custom session type if you extend the default session
@@ -42,23 +49,25 @@ function OIDCProvider(options: OIDCProviderConfig): OAuthConfig<any> {
 	console.log('-------------------');
 
 	return {
-		...options,
-		id: 'pramari.de',
-		name: 'pramari',
+		clientId: options.clientId,
+		clientSecret: options.clientSecret,
+		id: 'pramari',
+		name: 'pramari.de',
 		type: 'oauth',
 		wellKnown: wellKnownUrl,
-		authorization: { params: { scope: 'openid email userinfo' } },
-		// issuer: 'https://pramari.de',
+		issuer: options.issuer,
+		authorization: {
+			url: `${options.issuer}/o/authorize/`,
+			params: { scope: 'openid email userinfo' }
+		},
+		token: {
+			url: `${options.issuer}/o/token/`
+		},
+		userinfo: {
+			url: `${options.issuer}/o/userinfo/`
+		},
 		idToken: true,
 		checks: ['pkce', 'state'],
-		userinfo: async (token) => {
-			const response = await fetch(`${options.issuer}/o/userinfo`, {
-				headers: {
-					Authorization: `Bearer ${token.accessToken}`
-				}
-			});
-			return response.json();
-		},
 		profile(profile) {
 			return {
 				id: profile.sub,
@@ -101,9 +110,12 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 	],
 	callbacks: {
 		async session({ session, token }): Promise<CustomSession> {
-			// Add additional user info to the session if needed
 			return {
 				...session,
+				user: {
+					...session.user,
+					id: token.sub
+				},
 				accessToken: token.accessToken as string,
 				first_name: token.first_name as string | undefined,
 				last_name: token.last_name as string | undefined,
